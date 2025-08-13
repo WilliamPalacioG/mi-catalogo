@@ -3,78 +3,127 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Catálogo Delidiosa</title>
+    <title>Catálogo de Productos</title>
     <style>
-        body {font-family: 'Segoe UI', Arial, sans-serif; margin: 0; padding: 0; background-color: #f5f6fa; color: #2f3640;}
-        header {background: linear-gradient(135deg, #ff9800, #ff5722); padding: 1rem; text-align: center; color: white; font-size: 1.8rem; font-weight: bold;}
-        .controls {display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; padding: 15px; background-color: #fff; box-shadow: 0 2px 6px rgba(0,0,0,0.05);}
-        .controls input, .controls select {padding: 8px 12px; font-size: 1rem; border: 1px solid #ccc; border-radius: 6px; outline: none;}
-        .container {display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; padding: 1.5rem; max-width: 1200px; margin: auto;}
-        .no-results {grid-column: 1 / -1; text-align: center; color: #888; font-size: 1.1rem; padding: 20px;}
-        .card {background-color: white; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); overflow: hidden; display: flex; flex-direction: column; transition: transform 0.2s ease, box-shadow 0.2s ease;}
-        .card:hover {transform: translateY(-5px); box-shadow: 0 8px 16px rgba(0,0,0,0.15);}
-        .card img {width: 100%; height: 200px; object-fit: cover; background-color: #f0f0f0;}
-        .card-body {padding: 1rem; flex: 1; display: flex; flex-direction: column; justify-content: space-between;}
-        .card-body h3 {margin: 0 0 0.5rem; font-size: 1.2rem; color: #333;}
-        .card-body p {font-size: 0.9rem; color: #555; margin: 0.25rem 0;}
-        .price {font-size: 1.2rem; font-weight: bold; color: #27ae60; margin-top: 0.5rem;}
-        .stock {font-size: 0.85rem; color: #16a085;}
-        .btn-add {margin-top: 10px; display: inline-block; background-color: #25D366; color: white; text-align: center; padding: 10px; border-radius: 6px; text-decoration: none; font-weight: bold; transition: background 0.3s ease;}
-        .btn-add:hover {background-color: #1eb14b;}
-
-        /* Botón flotante carrito */
-        .cart-btn {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            background: #25D366;
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f6fa;
+            color: #2f3640;
+        }
+        header {
+            background: linear-gradient(135deg, #ff9800, #ff5722);
+            padding: 1rem;
+            text-align: center;
             color: white;
-            border: none;
-            border-radius: 50%;
-            width: 60px;
-            height: 60px;
-            font-size: 1.5rem;
-            cursor: pointer;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            font-size: 1.8rem;
+            font-weight: bold;
         }
-        .cart-count {
-            position: absolute;
-            top: -5px;
-            right: -5px;
-            background: red;
-            color: white;
-            font-size: 0.8rem;
-            padding: 2px 6px;
-            border-radius: 50%;
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+            padding: 15px;
+            background-color: #fff;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
         }
-
-        /* Modal carrito */
-        .cart-modal {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-            max-width: 400px;
-            width: 90%;
-            z-index: 1000;
-        }
-        .cart-item {display: flex; justify-content: space-between; align-items: center; padding: 5px 0; border-bottom: 1px solid #ddd;}
-        .btn-delete {
-            background: none;
-            border: none;
+        .controls input, .controls select {
+            padding: 8px 12px;
             font-size: 1rem;
-            color: red;
-            cursor: pointer;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            outline: none;
         }
-        footer {text-align: center; padding: 1rem; background: linear-gradient(135deg, #ff9800, #ff5722); color: white; margin-top: 2rem; font-size: 0.9rem;}
+        .container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            padding: 1.5rem;
+            max-width: 1200px;
+            margin: auto;
+        }
+        .no-results {
+            grid-column: 1 / -1;
+            text-align: center;
+            color: #888;
+            font-size: 1.1rem;
+            padding: 20px;
+        }
+        .card {
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.15);
+        }
+        .card img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            background-color: #f0f0f0;
+        }
+        .card-body {
+            padding: 1rem;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .card-body h3 {
+            margin: 0 0 0.5rem;
+            font-size: 1.2rem;
+            color: #333;
+        }
+        .card-body p {
+            font-size: 0.9rem;
+            color: #555;
+            margin: 0.25rem 0;
+        }
+        .price {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #27ae60;
+            margin-top: 0.5rem;
+        }
+        .stock {
+            font-size: 0.85rem;
+            color: #16a085;
+        }
+        .btn-whatsapp {
+            margin-top: 10px;
+            display: inline-block;
+            background-color: #25D366;
+            color: white;
+            text-align: center;
+            padding: 10px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: bold;
+            transition: background 0.3s ease;
+        }
+        .btn-whatsapp:hover {
+            background-color: #1eb14b;
+        }
+        footer {
+            text-align: center;
+            padding: 1rem;
+            background: linear-gradient(135deg, #ff9800, #ff5722);
+            color: white;
+            margin-top: 2rem;
+            font-size: 0.9rem;
+        }
     </style>
 </head>
 <body>
-    <header>🍔 Catálogo Delidiosa</header>
+    <header>🍔 Catálogo de Productos</header>
 
     <div class="controls">
         <input type="text" id="search" placeholder="Buscar producto...">
@@ -85,41 +134,17 @@
 
     <div class="container" id="product-container"></div>
 
-    <!-- Botón flotante del carrito -->
-    <button class="cart-btn" onclick="abrirCarrito()">🛒
-        <span class="cart-count" id="cart-count">0</span>
-    </button>
-
-    <!-- Modal del carrito -->
-    <div id="cart-modal" class="cart-modal" style="display:none;">
-        <h3>🛒 Tu pedido</h3>
-        <div id="cart-items"></div>
-        <p>Subtotal: <strong id="subtotal"></strong></p>
-        <p>Domicilio: <strong id="domicilio"></strong></p>
-        <p>Total: <strong id="total"></strong></p>
-        <button onclick="enviarPedido()">Enviar por WhatsApp</button>
-        <button onclick="cerrarCarrito()">Cerrar</button>
-    </div>
-
-    <footer>© 2025 - SWP Delidiosa Wpalacio</footer>
+    <footer>© 2025 - StatesWear</footer>
 
     <script>
         const API_URL = "https://script.google.com/macros/s/AKfycbx3bpwi-CLeqo4OtkViF4l5JnLpsSr_b1lf3nXUcYhtaIMVQPKg3tU48Ed_c-Bt2OWz/exec";
 
         let productos = [];
-        let carrito = [];
-        let domicilio = 0;
 
         async function cargarProductos() {
             try {
                 const res = await fetch(API_URL);
-                const data = await res.json();
-                productos = data.productos || data;
-
-                if (data.config && data.config.domicilio) {
-                    domicilio = Number(data.config.domicilio) || 0;
-                }
-
+                productos = await res.json();
                 mostrarCategorias();
                 mostrarProductos();
             } catch (error) {
@@ -146,10 +171,9 @@
             const categoriaSeleccionada = document.getElementById("filter-category").value;
 
             const filtrados = productos.filter(prod => {
-                const disponible = prod.Stock && prod.Stock !== "no disponible";
                 const coincideBusqueda = prod.Nombre.toLowerCase().includes(busqueda);
                 const coincideCategoria = !categoriaSeleccionada || prod.Categoría === categoriaSeleccionada;
-                return disponible && coincideBusqueda && coincideCategoria;
+                return coincideBusqueda && coincideCategoria;
             });
 
             if (filtrados.length === 0) {
@@ -166,74 +190,13 @@
                             <p>${prod.Descripción || ''}</p>
                             <p class="price">$${prod.Precio ? prod.Precio.toLocaleString() : ''}</p>
                             <p class="stock">Stock: ${prod.Stock || 0}</p>
-                            <button class="btn-add" onclick="agregarAlCarrito('${prod.Nombre}', ${prod.Precio})">Agregar al carrito</button>
+                            <a class="btn-whatsapp" href="https://wa.me/573147569934?text=Hola,%20quiero%20comprar%20${encodeURIComponent(prod.Nombre)}" target="_blank">
+                                Comprar por WhatsApp
+                            </a>
                         </div>
                     </div>
                 `;
             });
-        }
-
-        function agregarAlCarrito(nombre, precio) {
-            const item = carrito.find(p => p.nombre === nombre);
-            if (item) {
-                item.cantidad++;
-            } else {
-                carrito.push({ nombre, precio, cantidad: 1 });
-            }
-            actualizarContador();
-        }
-
-        function abrirCarrito() {
-            document.getElementById("cart-modal").style.display = "block";
-            actualizarCarrito();
-        }
-
-        function cerrarCarrito() {
-            document.getElementById("cart-modal").style.display = "none";
-        }
-
-        function actualizarCarrito() {
-            const cartItems = document.getElementById("cart-items");
-            cartItems.innerHTML = "";
-
-            let subtotal = 0;
-            carrito.forEach((item, index) => {
-                subtotal += item.precio * item.cantidad;
-                cartItems.innerHTML += `
-                    <div class="cart-item">
-                        ${item.nombre} - $${item.precio.toLocaleString()} x ${item.cantidad}
-                        <button class="btn-delete" onclick="eliminarDelCarrito(${index})">✖</button>
-                    </div>
-                `;
-            });
-
-            document.getElementById("subtotal").textContent = `$${subtotal.toLocaleString()}`;
-            document.getElementById("domicilio").textContent = `$${domicilio.toLocaleString()}`;
-            document.getElementById("total").textContent = `$${(subtotal + domicilio).toLocaleString()}`;
-        }
-
-        function eliminarDelCarrito(index) {
-            carrito.splice(index, 1);
-            actualizarCarrito();
-            actualizarContador();
-        }
-
-        function actualizarContador() {
-            const totalItems = carrito.reduce((acc, item) => acc + item.cantidad, 0);
-            document.getElementById("cart-count").textContent = totalItems;
-        }
-
-        function enviarPedido() {
-            let mensaje = "Hola, quiero hacer este pedido:\n";
-            carrito.forEach(item => {
-                mensaje += `${item.nombre} x ${item.cantidad} - $${item.precio.toLocaleString()}\n`;
-            });
-            mensaje += `\nDomicilio: $${domicilio.toLocaleString()}`;
-            const total = carrito.reduce((acc, item) => acc + item.precio * item.cantidad, 0) + domicilio;
-            mensaje += `\nTotal: $${total.toLocaleString()}`;
-
-            const url = `https://wa.me/573147569934?text=${encodeURIComponent(mensaje)}`;
-            window.open(url, "_blank");
         }
 
         document.getElementById("search").addEventListener("input", mostrarProductos);
@@ -243,4 +206,3 @@
     </script>
 </body>
 </html>
-
