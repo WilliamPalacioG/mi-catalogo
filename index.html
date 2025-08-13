@@ -97,19 +97,40 @@
             font-size: 0.85rem;
             color: #16a085;
         }
-        .btn-whatsapp {
+        .btn-add {
             margin-top: 10px;
             display: inline-block;
-            background-color: #25D366;
+            background-color: #ff9800;
             color: white;
             text-align: center;
             padding: 10px;
             border-radius: 6px;
             text-decoration: none;
             font-weight: bold;
+            border: none;
+            cursor: pointer;
             transition: background 0.3s ease;
         }
-        .btn-whatsapp:hover {
+        .btn-add:hover {
+            background-color: #e68900;
+        }
+        #btn-pedido {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: #25D366;
+            color: white;
+            padding: 15px 20px;
+            border-radius: 50px;
+            font-weight: bold;
+            font-size: 1rem;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            transition: background 0.3s ease;
+            z-index: 999;
+        }
+        #btn-pedido:hover {
             background-color: #1eb14b;
         }
         footer {
@@ -134,12 +155,16 @@
 
     <div class="container" id="product-container"></div>
 
+    <button id="btn-pedido" onclick="enviarPedido()">📦 Enviar pedido</button>
+
     <footer>© 2025 - SWP Delidiosa Wpalacio</footer>
 
     <script>
         const API_URL = "https://script.google.com/macros/s/AKfycbx3bpwi-CLeqo4OtkViF4l5JnLpsSr_b1lf3nXUcYhtaIMVQPKg3tU48Ed_c-Bt2OWz/exec";
+        const NUMERO_WHATSAPP = "573147569934"; // Cambia tu número aquí
 
         let productos = [];
+        let carrito = [];
 
         async function cargarProductos() {
             try {
@@ -190,13 +215,36 @@
                             <p>${prod.Descripción || ''}</p>
                             <p class="price">$${prod.Precio ? prod.Precio.toLocaleString() : ''}</p>
                             <p class="stock">Stock: ${prod.Stock || 0}</p>
-                            <a class="btn-whatsapp" href="https://wa.me/573147569934?text=Hola,%20quiero%20comprar%20${encodeURIComponent(prod.Nombre)}" target="_blank">
-                                Comprar por WhatsApp
-                            </a>
+                            <button class="btn-add" onclick="agregarAlCarrito('${prod.Nombre}', ${prod.Precio})">Agregar al carrito</button>
                         </div>
                     </div>
                 `;
             });
+        }
+
+        function agregarAlCarrito(nombre, precio) {
+            carrito.push({ nombre, precio });
+            alert(`✅ ${nombre} agregado al carrito`);
+        }
+
+        function enviarPedido() {
+            if (carrito.length === 0) {
+                alert("⚠️ No has agregado productos al carrito.");
+                return;
+            }
+
+            let mensaje = "Hola, quiero hacer el siguiente pedido:\n\n";
+            let total = 0;
+
+            carrito.forEach(item => {
+                mensaje += `• ${item.nombre} - $${item.precio.toLocaleString()}\n`;
+                total += item.precio;
+            });
+
+            mensaje += `\n💰 Total: $${total.toLocaleString()}`;
+
+            let url = `https://wa.me/${NUMERO_WHATSAPP}?text=${encodeURIComponent(mensaje)}`;
+            window.open(url, "_blank");
         }
 
         document.getElementById("search").addEventListener("input", mostrarProductos);
@@ -206,5 +254,3 @@
     </script>
 </body>
 </html>
-
-
