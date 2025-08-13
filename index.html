@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Catálogo de Productos</title>
+    <title>Catálogo Delidiosa</title>
     <style>
         body {
             font-family: 'Segoe UI', Arial, sans-serif;
@@ -97,7 +97,7 @@
             font-size: 0.85rem;
             color: #16a085;
         }
-        .btn-whatsapp {
+        .btn-add {
             margin-top: 10px;
             display: inline-block;
             background-color: #25D366;
@@ -108,8 +108,9 @@
             text-decoration: none;
             font-weight: bold;
             transition: background 0.3s ease;
+            cursor: pointer;
         }
-        .btn-whatsapp:hover {
+        .btn-add:hover {
             background-color: #1eb14b;
         }
         footer {
@@ -120,10 +121,61 @@
             margin-top: 2rem;
             font-size: 0.9rem;
         }
+        /* Carrito flotante */
+        #cart-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #ff9800;
+            color: white;
+            padding: 15px;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            font-size: 20px;
+        }
+        #cart-count {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: red;
+            color: white;
+            font-size: 14px;
+            padding: 2px 6px;
+            border-radius: 50%;
+        }
+        /* Modal carrito */
+        #cart-modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
+            justify-content: center;
+            align-items: center;
+        }
+        #cart-content {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 400px;
+        }
+        .cart-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            align-items: center;
+        }
+        .remove-item {
+            color: red;
+            cursor: pointer;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
-    <header>🍔 Catálogo de Productos</header>
+    <header>🍔 Catálogo Delidiosa</header>
 
     <div class="controls">
         <input type="text" id="search" placeholder="Buscar producto...">
@@ -134,17 +186,52 @@
 
     <div class="container" id="product-container"></div>
 
-    <footer>© 2025 - StatesWear</footer>
+    <!-- Botón flotante carrito -->
+    <div id="cart-btn">
+        🛒
+        <span id="cart-count">0</span>
+    </div>
+
+    <!-- Modal carrito -->
+    <div id="cart-modal">
+        <div id="cart-content">
+            <h3>🛍 Tu pedido</h3>
+            <div id="cart-items"></div>
+            <hr>
+            <p>Subtotal: <span id="subtotal"></span></p>
+            <p>Domicilio: <span id="domicilio"></span></p>
+            <p><b>Total: <span id="total"></span></b></p>
+            <a id="whatsapp-btn" class="btn-add" href="#">Enviar por WhatsApp</a>
+            <br><br>
+            <button onclick="cerrarCarrito()">Cerrar</button>
+        </div>
+    </div>
+
+    <footer>© 2025 - SWP Delidiosa Wpalacio</footer>
 
     <script>
-        const API_URL = "https://script.google.com/macros/s/AKfycbx3bpwi-CLeqo4OtkViF4l5JnLpsSr_b1lf3nXUcYhtaIMVQPKg3tU48Ed_c-Bt2OWz/exec";
-
+        const API_URL = "TU_URL_APPS_SCRIPT";
         let productos = [];
+        let carrito = [];
+        let domicilio = 0;
 
         async function cargarProductos() {
             try {
                 const res = await fetch(API_URL);
-                productos = await res.json();
+                const data = await res.json();
+
+                productos = data.productos || data;
+
+                // Obtener domicilio de hoja Config
+                if (data.config) {
+                    const filaDomicilio = data.config.find(f => 
+                        f.Clave && f.Clave.toLowerCase() === "domicilio"
+                    );
+                    if (filaDomicilio && filaDomicilio.Valor) {
+                        domicilio = Number(filaDomicilio.Valor) || 0;
+                    }
+                }
+
                 mostrarCategorias();
                 mostrarProductos();
             } catch (error) {
@@ -171,9 +258,10 @@
             const categoriaSeleccionada = document.getElementById("filter-category").value;
 
             const filtrados = productos.filter(prod => {
+                const disponible = prod.Stock && prod.Stock.toLowerCase() !== "no disponible";
                 const coincideBusqueda = prod.Nombre.toLowerCase().includes(busqueda);
                 const coincideCategoria = !categoriaSeleccionada || prod.Categoría === categoriaSeleccionada;
-                return coincideBusqueda && coincideCategoria;
+                return disponible && coincideBusqueda && coincideCategoria;
             });
 
             if (filtrados.length === 0) {
@@ -190,17 +278,67 @@
                             <p>${prod.Descripción || ''}</p>
                             <p class="price">$${prod.Precio ? prod.Precio.toLocaleString() : ''}</p>
                             <p class="stock">Stock: ${prod.Stock || 0}</p>
-                            <a class="btn-whatsapp" href="https://wa.me/573147569934?text=Hola,%20quiero%20comprar%20${encodeURIComponent(prod.Nombre)}" target="_blank">
-                                Comprar por WhatsApp
-                            </a>
+                            <div class="btn-add" onclick="agregarAlCarrito('${prod.Nombre}', ${prod.Precio})">Añadir al carrito</div>
                         </div>
                     </div>
                 `;
             });
         }
 
+        function agregarAlCarrito(nombre, precio) {
+            const existe = carrito.find(item => item.nombre === nombre);
+            if (existe) {
+                existe.cantidad++;
+            } else {
+                carrito.push({ nombre, precio, cantidad: 1 });
+            }
+            actualizarCarrito();
+        }
+
+        function actualizarCarrito() {
+            document.getElementById("cart-count").textContent = carrito.reduce((acc, item) => acc + item.cantidad, 0);
+        }
+
+        function abrirCarrito() {
+            document.getElementById("cart-items").innerHTML = carrito.map((item, index) => `
+                <div class="cart-item">
+                    ${item.nombre} (${item.cantidad}) - $${(item.precio * item.cantidad).toLocaleString()}
+                    <span class="remove-item" onclick="eliminarDelCarrito(${index})">❌</span>
+                </div>
+            `).join("");
+
+            const subtotal = carrito.reduce((acc, item) => acc + item.precio * item.cantidad, 0);
+            document.getElementById("subtotal").textContent = `$${subtotal.toLocaleString()}`;
+            document.getElementById("domicilio").textContent = `$${domicilio.toLocaleString()}`;
+            document.getElementById("total").textContent = `$${(subtotal + domicilio).toLocaleString()}`;
+
+            document.getElementById("whatsapp-btn").href = generarLinkWhatsApp(subtotal + domicilio);
+
+            document.getElementById("cart-modal").style.display = "flex";
+        }
+
+        function cerrarCarrito() {
+            document.getElementById("cart-modal").style.display = "none";
+        }
+
+        function eliminarDelCarrito(index) {
+            carrito.splice(index, 1);
+            actualizarCarrito();
+            abrirCarrito();
+        }
+
+        function generarLinkWhatsApp(total) {
+            let mensaje = "Hola, quiero hacer este pedido:\n";
+            carrito.forEach(item => {
+                mensaje += `- ${item.nombre} x${item.cantidad} = $${(item.precio * item.cantidad).toLocaleString()}\n`;
+            });
+            mensaje += `Domicilio: $${domicilio.toLocaleString()}\nTotal: $${total.toLocaleString()}`;
+            return `https://wa.me/573147569934?text=${encodeURIComponent(mensaje)}`;
+        }
+
         document.getElementById("search").addEventListener("input", mostrarProductos);
         document.getElementById("filter-category").addEventListener("change", mostrarProductos);
+        document.getElementById("cart-btn").addEventListener("click", abrirCarrito);
 
         cargarProductos();
     </script>
