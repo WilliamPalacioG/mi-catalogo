@@ -21,9 +21,55 @@
         .stock {font-size: 0.85rem; color: #16a085;}
         .btn-add {margin-top: 10px; display: inline-block; background-color: #25D366; color: white; text-align: center; padding: 10px; border-radius: 6px; text-decoration: none; font-weight: bold; transition: background 0.3s ease;}
         .btn-add:hover {background-color: #1eb14b;}
-        .cart-modal {position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); max-width: 400px; width: 90%; z-index: 1000;}
+
+        /* Botón flotante carrito */
+        .cart-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #25D366;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            font-size: 1.5rem;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+        .cart-count {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: red;
+            color: white;
+            font-size: 0.8rem;
+            padding: 2px 6px;
+            border-radius: 50%;
+        }
+
+        /* Modal carrito */
+        .cart-modal {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            max-width: 400px;
+            width: 90%;
+            z-index: 1000;
+        }
         .cart-item {display: flex; justify-content: space-between; align-items: center; padding: 5px 0; border-bottom: 1px solid #ddd;}
-        .btn-delete {background: none; border: none; font-size: 1.2rem; cursor: pointer;}
+        .btn-delete {
+            background: none;
+            border: none;
+            font-size: 1rem;
+            color: red;
+            cursor: pointer;
+        }
         footer {text-align: center; padding: 1rem; background: linear-gradient(135deg, #ff9800, #ff5722); color: white; margin-top: 2rem; font-size: 0.9rem;}
     </style>
 </head>
@@ -35,11 +81,16 @@
         <select id="filter-category">
             <option value="">Todas las categorías</option>
         </select>
-        <button onclick="abrirCarrito()">🛒 Ver Pedido</button>
     </div>
 
     <div class="container" id="product-container"></div>
 
+    <!-- Botón flotante del carrito -->
+    <button class="cart-btn" onclick="abrirCarrito()">🛒
+        <span class="cart-count" id="cart-count">0</span>
+    </button>
+
+    <!-- Modal del carrito -->
     <div id="cart-modal" class="cart-modal" style="display:none;">
         <h3>🛒 Tu pedido</h3>
         <div id="cart-items"></div>
@@ -65,7 +116,6 @@
                 const data = await res.json();
                 productos = data.productos || data;
 
-                // Si existe Config
                 if (data.config && data.config.domicilio) {
                     domicilio = Number(data.config.domicilio) || 0;
                 }
@@ -130,6 +180,7 @@
             } else {
                 carrito.push({ nombre, precio, cantidad: 1 });
             }
+            actualizarContador();
         }
 
         function abrirCarrito() {
@@ -151,7 +202,7 @@
                 cartItems.innerHTML += `
                     <div class="cart-item">
                         ${item.nombre} - $${item.precio.toLocaleString()} x ${item.cantidad}
-                        <button class="btn-delete" onclick="eliminarDelCarrito(${index})">🗑️</button>
+                        <button class="btn-delete" onclick="eliminarDelCarrito(${index})">✖</button>
                     </div>
                 `;
             });
@@ -164,6 +215,12 @@
         function eliminarDelCarrito(index) {
             carrito.splice(index, 1);
             actualizarCarrito();
+            actualizarContador();
+        }
+
+        function actualizarContador() {
+            const totalItems = carrito.reduce((acc, item) => acc + item.cantidad, 0);
+            document.getElementById("cart-count").textContent = totalItems;
         }
 
         function enviarPedido() {
@@ -186,3 +243,4 @@
     </script>
 </body>
 </html>
+
