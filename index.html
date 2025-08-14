@@ -1,4 +1,4 @@
-  <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8" />
@@ -57,6 +57,8 @@
   .nequi-number{font-weight:700;color:#000;background:#fff;padding:4px 8px;border-radius:6px;border:1px solid #ccc}
   .copy-btn{padding:4px 8px;font-size:.8rem;background:var(--brand1);color:#fff;border:none;border-radius:6px;cursor:pointer}
   .copy-btn:hover{background:var(--brand2)}
+  .direccion-input{width:100%;padding:6px;border:1px solid #ccc;border-radius:6px;margin-top:6px}
+  .direccion-error{border-color:var(--danger)!important;background:#ffe5e5}
   @media (min-width:768px){.card img{height:200px}}
 </style>
 </head>
@@ -86,15 +88,11 @@
       <p><span>Total</span><strong>$<span id="total-carrito">0</span></strong></p>
     </div>
 
-    <!-- DIRECCIÓN -->
-    <div class="payment-section">
-      <strong>📍 Dirección de entrega</strong>
-      <input type="text" id="direccion-envio" placeholder="Escribe tu dirección completa" 
-             style="width:100%;padding:6px;border:1px solid #ccc;border-radius:6px;margin-top:6px;">
-      <small id="direccion-error" style="color:red;display:none;">⚠ Ingresa una dirección válida</small>
-    </div>
+    <!-- Dirección -->
+    <label><strong>📍 Dirección de entrega</strong></label>
+    <input type="text" id="direccion" class="direccion-input" placeholder="Escribe tu dirección">
 
-    <!-- MÉTODO DE PAGO -->
+    <!-- Método de pago -->
     <div class="payment-section">
       <strong>💳 Método de pago</strong>
       <label><input type="radio" name="metodoPago" value="Efectivo"> Efectivo</label>
@@ -118,7 +116,7 @@
 </footer>
 
 <script>
-const API_URL = "https://script.google.com/macros/s/AKfycbyzGpnHhaChQeH5OqjUbt3bWkSjEchxzHDzl04QLCcIP7CJJ1w2BdIvGXzZPMiJhgW8/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbyrJwiMMO3opFeo3lkpxhvsxPHlVX58ANJkfZoGE5jaiRlUzY57EeO64PIM1coWALIV/exec";
 const NUMERO_WHATSAPP = "573147569934";
 
 let productos = [];
@@ -129,26 +127,16 @@ const fmt = n => Number(n||0).toLocaleString();
 const isNoDisponible = v => (typeof v === 'string' && v.trim().toLowerCase() === 'no disponible') || Number(v) === 0;
 
 async function cargarProductos(){
-  try{
-    const res = await fetch(API_URL,{cache:"no-store"});
-    const data = await res.json();
-    if(Array.isArray(data)){
-      productos = data;
-      COSTO_DOMICILIO = 1000;
-    }else{
-      productos = data.productos || [];
-      COSTO_DOMICILIO = Number((data.config && data.config.Domicilio) || 0);
-      NUMERO_NEQUI = (data.config && (data.config.Nequi || data.config.NEQUI)) || "";
-      document.getElementById("nequi-numero").textContent = NUMERO_NEQUI;
-    }
-    document.getElementById('domicilio-label').textContent = `$${fmt(COSTO_DOMICILIO)}`;
-    mostrarCategorias();mostrarProductos();actualizarCarrito();
-    document.getElementById('state').style.display="none";
-    document.getElementById('product-container').style.display="grid";
-  }catch(e){
-    console.error(e);
-    document.getElementById('state').textContent="Error cargando productos";
-  }
+  const res = await fetch(API_URL,{cache:"no-store"});
+  const data = await res.json();
+  productos = data.productos || [];
+  COSTO_DOMICILIO = Number((data.config && data.config.Domicilio) || 0);
+  NUMERO_NEQUI = (data.config && (data.config.Nequi || data.config.NEQUI)) || "";
+  document.getElementById("nequi-numero").textContent = NUMERO_NEQUI;
+  document.getElementById('domicilio-label').textContent = `$${fmt(COSTO_DOMICILIO)}`;
+  mostrarCategorias();mostrarProductos();actualizarCarrito();
+  document.getElementById('state').style.display="none";
+  document.getElementById('product-container').style.display="grid";
 }
 
 function mostrarCategorias(){
@@ -220,118 +208,77 @@ function actualizarCarrito(){
 
 function abrirCarrito(){document.getElementById("modal-carrito").style.display="block";}
 function cerrarCarrito(){document.getElementById("modal-carrito").style.display="none";}
+function copiarNequi(){navigator.clipboard.writeText(NUMERO_NEQUI).then(()=>alert("Número Nequi copiado"));}
 
-function copiarNequi(){
-  navigator.clipboard.writeText(NUMERO_NEQUI).then(()=>alert("Número Nequi copiado"));
-}
-
-function enviarPedido(){
-  if(carrito.length===0){alert("⚠️ No has agregado productos.");return;}
-
-  const metodo=document.querySelector('input[name="metodoPago"]:checked');
-  if(!metodo){alert("⚠️ Selecciona un método de pago.");return;}
-
-  const direccionInput = document.getElementById("direccion-envio");
-  const direccionError = document.getElementById("direccion-error");
-  const direccion = direccionInput.value.trim();
-
-  if(!direccion){
-    direccionInput.style.border = "2px solid red";
-    direccionError.style.display = "block";
-    direccionInput.focus();
-    return;
-  } else {
-    direccionInput.style.border = "1px solid #ccc";
-    direccionError.style.display = "none";
-  }
-
-  if(metodo.value==="Nequi"){
-    const confirmar = confirm("📢 Recuerda enviar el soporte de pago después de que confirmemos para iniciar tu pedido.");
-    if(!confirmar) return;
-  }
-
-  let pagoExtra="";
-  if(metodo.value==="Efectivo"){
-    const monto=document.getElementById("monto-efectivo").value;
-    if(!monto){alert("⚠️ Ingresa con cuánto pagas.");return;}
-    pagoExtra=`\n💵 Pago con: $${fmt(monto)}`;
-  } else {
-    pagoExtra=`\n📱 Pago por Nequi a este número: ${NUMERO_NEQUI}`;
-  }
-
-  // ...validaciones previas (carrito, método de pago, dirección, popup Nequi, etc.)...
-
-const sub = carrito.reduce((s,i)=>s+i.precio*i.qty,0);
-const total = sub + Number(COSTO_DOMICILIO||0);
-
-// 1) Registrar en la hoja "Ventas"
-const payload = {
-  items: carrito.map(i => ({
-    nombre: i.nombre,
-    qty: i.qty,
-    precio: i.precio,
-    subtotal: i.precio * i.qty
-  })),
-  subtotal: sub,
-  domicilio: Number(COSTO_DOMICILIO||0),
-  total: total,
-  metodoPago: metodo.value,
-  montoEfectivo: metodo.value === 'Efectivo' ? Number(document.getElementById('monto-efectivo').value || 0) : null,
-  nequi: metodo.value === 'Nequi' ? NUMERO_NEQUI : null,
-  direccion: direccion,
-  whatsapp: NUMERO_WHATSAPP
-};
-
-// Espera a que registre (opcional, pero recomendado para asegurarlo)
-await registrarVenta(payload);
-
-// 2) Enviar a WhatsApp
-let mensaje = "Hola, quiero hacer el siguiente pedido:\n\n";
-carrito.forEach(it => mensaje += `• ${it.nombre} x${it.qty} - $${fmt(it.precio*it.qty)}\n`);
-mensaje += `\n📍 Dirección: ${direccion}`;
-mensaje += `\nSubtotal: $${fmt(sub)}\nDomicilio: $${fmt(COSTO_DOMICILIO)}\n💰 Total: $${fmt(total)}`;
-if (metodo.value === "Efectivo") {
-  const monto = document.getElementById("monto-efectivo").value;
-  mensaje += `\n💵 Pago con: $${fmt(monto)}`;
-} else {
-  mensaje += `\n📱 Pago por Nequi a este número: ${NUMERO_NEQUI}`;
-}
-window.open(`https://wa.me/${NUMERO_WHATSAPP}?text=${encodeURIComponent(mensaje)}`,"_blank");
-
-// limpiar carrito
-carrito=[]; persistirCarrito(); actualizarCarrito(); cerrarCarrito();
-
-}
-
-document.getElementById("search").addEventListener("input",mostrarProductos);
-document.getElementById("filter-category").addEventListener("change",mostrarProductos);
-document.querySelector('input[value="Efectivo"]').addEventListener("change",()=>{document.getElementById("efectivo-box").style.display="block";document.getElementById("nequi-box").style.display="none";});
-document.querySelector('input[value="Nequi"]').addEventListener("change",()=>{
-    document.getElementById("efectivo-box").style.display="none";
-    document.getElementById("nequi-box").style.display="flex";
-});
-cargarProductos();
-
-  async function registrarVenta(payload){
+async function registrarVenta(payload){
   try{
-    // Usamos 'text/plain' para evitar preflight CORS en Apps Script
     const res = await fetch(API_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'text/plain' },
       body: JSON.stringify(payload)
     });
-    const json = await res.json().catch(()=> ({}));
-    if (!json.ok) {
-      console.warn("No se pudo registrar la venta:", json.error);
-    }
-    return json;
-  }catch(e){
-    console.error("Error registrando venta:", e);
-    return { ok:false, error:String(e) };
-  }
+    return await res.json();
+  }catch(e){return { ok:false, error:String(e) }}
 }
 
+async function enviarPedido(){
+  if(carrito.length===0){alert("⚠️ No has agregado productos.");return;}
+  const direccion=document.getElementById("direccion");
+  if(!direccion.value.trim()){
+    direccion.classList.add("direccion-error");
+    alert("⚠️ Debes ingresar la dirección.");
+    return;
+  } else {direccion.classList.remove("direccion-error");}
+
+  const metodo=document.querySelector('input[name="metodoPago"]:checked');
+  if(!metodo){alert("⚠️ Selecciona un método de pago.");return;}
+
+  if(metodo.value==="Efectivo"){
+    const monto=document.getElementById("monto-efectivo").value;
+    if(!monto){alert("⚠️ Ingresa con cuánto pagas.");return;}
+  }
+  if(metodo.value==="Nequi"){
+    if(!confirm("Recuerda enviar el soporte de pago después de que confirmemos para iniciar tu pedido")) return;
+  }
+
+  const sub=carrito.reduce((s,i)=>s+i.precio*i.qty,0);
+  const total=sub+Number(COSTO_DOMICILIO||0);
+
+  const payload = {
+    items: carrito.map(i => ({nombre: i.nombre, qty: i.qty, precio: i.precio, subtotal: i.precio*i.qty})),
+    subtotal: sub,
+    domicilio: Number(COSTO_DOMICILIO||0),
+    total: total,
+    metodoPago: metodo.value,
+    montoEfectivo: metodo.value === 'Efectivo' ? Number(document.getElementById('monto-efectivo').value || 0) : null,
+    nequi: metodo.value === 'Nequi' ? NUMERO_NEQUI : null,
+    direccion: direccion.value.trim(),
+    whatsapp: NUMERO_WHATSAPP
+  };
+
+  await registrarVenta(payload);
+
+  let mensaje="Hola, quiero hacer el siguiente pedido:\n\n";
+  carrito.forEach(it=>mensaje+=`• ${it.nombre} x${it.qty} - $${fmt(it.precio*it.qty)}\n`);
+  mensaje+=`\n📍 Dirección: ${direccion.value.trim()}`;
+  mensaje+=`\nSubtotal: $${fmt(sub)}\nDomicilio: $${fmt(COSTO_DOMICILIO)}\n💰 Total: $${fmt(total)}`;
+  if (metodo.value === "Efectivo") {
+    const monto = document.getElementById("monto-efectivo").value;
+    mensaje += `\n💵 Pago con: $${fmt(monto)}`;
+  } else {
+    mensaje += `\n📱 Pago por Nequi a este número: ${NUMERO_NEQUI}`;
+  }
+  window.open(`https://wa.me/${NUMERO_WHATSAPP}?text=${encodeURIComponent(mensaje)}`,"_blank");
+
+  carrito=[];persistirCarrito();actualizarCarrito();cerrarCarrito();
+}
+
+document.getElementById("search").addEventListener("input",mostrarProductos);
+document.getElementById("filter-category").addEventListener("change",mostrarProductos);
+document.querySelector('input[value="Efectivo"]').addEventListener("change",()=>{document.getElementById("efectivo-box").style.display="block";document.getElementById("nequi-box").style.display="none";});
+document.querySelector('input[value="Nequi"]').addEventListener("change",()=>{document.getElementById("nequi-box").style.display="flex";document.getElementById("efectivo-box").style.display="none";});
+
+cargarProductos();
 </script>
 </body>
 </html>
-
