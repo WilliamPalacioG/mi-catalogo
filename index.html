@@ -270,7 +270,9 @@ async function enviarPedido(){
   }
   window.open(`https://wa.me/${NUMERO_WHATSAPP}?text=${encodeURIComponent(mensaje)}`,"_blank");
 
-  carrito=[];persistirCarrito();actualizarCarrito();cerrarCarrito();
+  carrito=[];persistirCarrito();actualizarCarrito();
+  document.getElementById("monto-efectivo").value = ""; // 🔹 Limpia el campo efectivo
+  cerrarCarrito();
 }
 
 document.getElementById("search").addEventListener("input",mostrarProductos);
@@ -282,4 +284,5 @@ cargarProductos();
 </script>
 </body>
 </html>
+
 
