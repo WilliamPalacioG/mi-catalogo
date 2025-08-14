@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+  <!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8" />
@@ -118,7 +118,7 @@
 </footer>
 
 <script>
-const API_URL = "https://script.google.com/macros/s/AKfycbxyliYVaC7MRO2fgxF4sU6ToIX0KxYnoBtdZMFspw0VWJ-Lh1lyfnzXc2g1BRiUDJxB/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbyzGpnHhaChQeH5OqjUbt3bWkSjEchxzHDzl04QLCcIP7CJJ1w2BdIvGXzZPMiJhgW8/exec";
 const NUMERO_WHATSAPP = "573147569934";
 
 let productos = [];
@@ -259,16 +259,48 @@ function enviarPedido(){
     pagoExtra=`\n📱 Pago por Nequi a este número: ${NUMERO_NEQUI}`;
   }
 
-  const sub=carrito.reduce((s,i)=>s+i.precio*i.qty,0);
-  const total=sub+Number(COSTO_DOMICILIO||0);
+  // ...validaciones previas (carrito, método de pago, dirección, popup Nequi, etc.)...
 
-  let mensaje="Hola, quiero hacer el siguiente pedido:\n\n";
-  carrito.forEach(it=>mensaje+=`• ${it.nombre} x${it.qty} - $${fmt(it.precio*it.qty)}\n`);
-  mensaje+=`\n📍 Dirección: ${direccion}`;
-  mensaje+=`\nSubtotal: $${fmt(sub)}\nDomicilio: $${fmt(COSTO_DOMICILIO)}\n💰 Total: $${fmt(total)}${pagoExtra}`;
+const sub = carrito.reduce((s,i)=>s+i.precio*i.qty,0);
+const total = sub + Number(COSTO_DOMICILIO||0);
 
-  window.open(`https://wa.me/${NUMERO_WHATSAPP}?text=${encodeURIComponent(mensaje)}`,"_blank");
-  carrito=[];persistirCarrito();actualizarCarrito();cerrarCarrito();
+// 1) Registrar en la hoja "Ventas"
+const payload = {
+  items: carrito.map(i => ({
+    nombre: i.nombre,
+    qty: i.qty,
+    precio: i.precio,
+    subtotal: i.precio * i.qty
+  })),
+  subtotal: sub,
+  domicilio: Number(COSTO_DOMICILIO||0),
+  total: total,
+  metodoPago: metodo.value,
+  montoEfectivo: metodo.value === 'Efectivo' ? Number(document.getElementById('monto-efectivo').value || 0) : null,
+  nequi: metodo.value === 'Nequi' ? NUMERO_NEQUI : null,
+  direccion: direccion,
+  whatsapp: NUMERO_WHATSAPP
+};
+
+// Espera a que registre (opcional, pero recomendado para asegurarlo)
+await registrarVenta(payload);
+
+// 2) Enviar a WhatsApp
+let mensaje = "Hola, quiero hacer el siguiente pedido:\n\n";
+carrito.forEach(it => mensaje += `• ${it.nombre} x${it.qty} - $${fmt(it.precio*it.qty)}\n`);
+mensaje += `\n📍 Dirección: ${direccion}`;
+mensaje += `\nSubtotal: $${fmt(sub)}\nDomicilio: $${fmt(COSTO_DOMICILIO)}\n💰 Total: $${fmt(total)}`;
+if (metodo.value === "Efectivo") {
+  const monto = document.getElementById("monto-efectivo").value;
+  mensaje += `\n💵 Pago con: $${fmt(monto)}`;
+} else {
+  mensaje += `\n📱 Pago por Nequi a este número: ${NUMERO_NEQUI}`;
+}
+window.open(`https://wa.me/${NUMERO_WHATSAPP}?text=${encodeURIComponent(mensaje)}`,"_blank");
+
+// limpiar carrito
+carrito=[]; persistirCarrito(); actualizarCarrito(); cerrarCarrito();
+
 }
 
 document.getElementById("search").addEventListener("input",mostrarProductos);
@@ -279,6 +311,27 @@ document.querySelector('input[value="Nequi"]').addEventListener("change",()=>{
     document.getElementById("nequi-box").style.display="flex";
 });
 cargarProductos();
+
+  async function registrarVenta(payload){
+  try{
+    // Usamos 'text/plain' para evitar preflight CORS en Apps Script
+    const res = await fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify(payload)
+    });
+    const json = await res.json().catch(()=> ({}));
+    if (!json.ok) {
+      console.warn("No se pudo registrar la venta:", json.error);
+    }
+    return json;
+  }catch(e){
+    console.error("Error registrando venta:", e);
+    return { ok:false, error:String(e) };
+  }
+}
+
 </script>
 </body>
 </html>
+
