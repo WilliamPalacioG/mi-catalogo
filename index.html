@@ -86,6 +86,14 @@
       <p><span>Total</span><strong>$<span id="total-carrito">0</span></strong></p>
     </div>
 
+    <!-- DIRECCIÓN -->
+    <div class="payment-section">
+      <strong>📍 Dirección de entrega</strong>
+      <input type="text" id="direccion-envio" placeholder="Escribe tu dirección completa" 
+             style="width:100%;padding:6px;border:1px solid #ccc;border-radius:6px;margin-top:6px;">
+      <small id="direccion-error" style="color:red;display:none;">⚠ Ingresa una dirección válida</small>
+    </div>
+
     <!-- MÉTODO DE PAGO -->
     <div class="payment-section">
       <strong>💳 Método de pago</strong>
@@ -219,16 +227,36 @@ function copiarNequi(){
 
 function enviarPedido(){
   if(carrito.length===0){alert("⚠️ No has agregado productos.");return;}
+
   const metodo=document.querySelector('input[name="metodoPago"]:checked');
   if(!metodo){alert("⚠️ Selecciona un método de pago.");return;}
+
+  const direccionInput = document.getElementById("direccion-envio");
+  const direccionError = document.getElementById("direccion-error");
+  const direccion = direccionInput.value.trim();
+
+  if(!direccion){
+    direccionInput.style.border = "2px solid red";
+    direccionError.style.display = "block";
+    direccionInput.focus();
+    return;
+  } else {
+    direccionInput.style.border = "1px solid #ccc";
+    direccionError.style.display = "none";
+  }
+
+  if(metodo.value==="Nequi"){
+    const confirmar = confirm("📢 Recuerda enviar el soporte de pago después de que confirmemos para iniciar tu pedido.");
+    if(!confirmar) return;
+  }
 
   let pagoExtra="";
   if(metodo.value==="Efectivo"){
     const monto=document.getElementById("monto-efectivo").value;
     if(!monto){alert("⚠️ Ingresa con cuánto pagas.");return;}
     pagoExtra=`\n💵 Pago con: $${fmt(monto)}`;
-  }else{
-    pagoExtra=`\n📱 Pago por Nequi a este numero: ${NUMERO_NEQUI}`;
+  } else {
+    pagoExtra=`\n📱 Pago por Nequi a este número: ${NUMERO_NEQUI}`;
   }
 
   const sub=carrito.reduce((s,i)=>s+i.precio*i.qty,0);
@@ -236,6 +264,7 @@ function enviarPedido(){
 
   let mensaje="Hola, quiero hacer el siguiente pedido:\n\n";
   carrito.forEach(it=>mensaje+=`• ${it.nombre} x${it.qty} - $${fmt(it.precio*it.qty)}\n`);
+  mensaje+=`\n📍 Dirección: ${direccion}`;
   mensaje+=`\nSubtotal: $${fmt(sub)}\nDomicilio: $${fmt(COSTO_DOMICILIO)}\n💰 Total: $${fmt(total)}${pagoExtra}`;
 
   window.open(`https://wa.me/${NUMERO_WHATSAPP}?text=${encodeURIComponent(mensaje)}`,"_blank");
@@ -245,12 +274,4 @@ function enviarPedido(){
 document.getElementById("search").addEventListener("input",mostrarProductos);
 document.getElementById("filter-category").addEventListener("change",mostrarProductos);
 document.querySelector('input[value="Efectivo"]').addEventListener("change",()=>{document.getElementById("efectivo-box").style.display="block";document.getElementById("nequi-box").style.display="none";});
-document.querySelector('input[value="Nequi"]').addEventListener("change",()=>{document.getElementById("efectivo-box").style.display="none";document.getElementById("nequi-box").style.display="flex";});
-
-cargarProductos();
-</script>
-</body>
-</html>
-
-
-
+document.querySelector('input[value="Nequi"]').addEventListener("change",()=>{document.getElementById("efectivo-box").style.display="none";document.getElementById("nequi-box").style.display="flex
