@@ -274,4 +274,11 @@ function enviarPedido(){
 document.getElementById("search").addEventListener("input",mostrarProductos);
 document.getElementById("filter-category").addEventListener("change",mostrarProductos);
 document.querySelector('input[value="Efectivo"]').addEventListener("change",()=>{document.getElementById("efectivo-box").style.display="block";document.getElementById("nequi-box").style.display="none";});
-document.querySelector('input[value="Nequi"]').addEventListener("change",()=>{document.getElementById("efectivo-box").style.display="none";document.getElementById("nequi-box").style.display="flex
+document.querySelector('input[value="Nequi"]').addEventListener("change",()=>{
+    document.getElementById("efectivo-box").style.display="none";
+    document.getElementById("nequi-box").style.display="flex";
+});
+cargarProductos();
+</script>
+</body>
+</html>
