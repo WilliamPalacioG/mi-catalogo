@@ -226,9 +226,9 @@ function enviarPedido(){
   if(metodo.value==="Efectivo"){
     const monto=document.getElementById("monto-efectivo").value;
     if(!monto){alert("⚠️ Ingresa con cuánto pagas.");return;}
-    pagoExtra=`\n💵 Paga con: $${fmt(monto)}`;
+    pagoExtra=`\n💵 Pago con: $${fmt(monto)}`;
   }else{
-    pagoExtra=`\n📱 Pago por Nequi: ${NUMERO_NEQUI}`;
+    pagoExtra=`\n📱 Pago por Nequi a este numero: ${NUMERO_NEQUI}`;
   }
 
   const sub=carrito.reduce((s,i)=>s+i.precio*i.qty,0);
@@ -251,5 +251,6 @@ cargarProductos();
 </script>
 </body>
 </html>
+
 
 
