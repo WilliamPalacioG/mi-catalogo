@@ -269,6 +269,28 @@ async function enviarPedido(){
   if(resp.ok){
     pedidoCliente = resp.numeroPedido; // guardamos el pedido
     alert(`✅ Tu pedido N°${resp.numeroPedido} está en preparación`);
+
+  // Construir mensaje para WhatsApp
+  let msg = `📋 Pedido N°${resp.numeroPedido}%0A`;
+  msg += `📍 Dirección: ${payload.direccion}%0A`;
+  msg += `📱 Celular: ${payload.celular}%0A`;
+  msg += `💳 Pago: ${payload.metodoPago}`;
+  if(payload.metodoPago==="Efectivo") msg += ` (con $${payload.montoEfectivo})`;
+  msg += `%0A--------------------%0A`;
+  payload.items.forEach(it=>{
+    msg += `${it.nombre} x${it.qty} - $${it.subtotal}%0A`;
+  });
+  msg += `--------------------%0A`;
+  msg += `Subtotal: $${payload.subtotal}%0A`;
+  msg += `Domicilio: $${payload.domicilio}%0A`;
+  msg += `TOTAL: $${payload.total}`;
+
+  // Abrir WhatsApp
+  const url = `https://wa.me/${NUMERO_WHATSAPP}?text=${msg}`;
+  window.open(url, "_blank");
+
+  // limpiar carrito y UI
+    
     carrito=[];persistirCarrito();actualizarCarrito();cerrarCarrito();
     document.getElementById("monto-efectivo").value="";
     actualizarBanner();
@@ -310,4 +332,5 @@ cargarProductos();
 </script>
 </body>
 </html>
+
 
