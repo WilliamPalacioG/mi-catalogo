@@ -270,24 +270,28 @@ async function enviarPedido(){
     pedidoCliente = resp.numeroPedido; // guardamos el pedido
     alert(`✅ Tu pedido N°${resp.numeroPedido} está en preparación`);
 
-  // Construir mensaje para WhatsApp
-  let msg = `📋 Pedido N°${resp.numeroPedido}%0A`;
-  msg += `📍 Dirección: ${payload.direccion}%0A`;
-  msg += `📱 Celular: ${payload.celular}%0A`;
-  msg += `💳 Pago: ${payload.metodoPago}`;
-  if(payload.metodoPago==="Efectivo") msg += ` (con $${payload.montoEfectivo})`;
-  msg += `%0A--------------------%0A`;
-  payload.items.forEach(it=>{
-    msg += `${it.nombre} x${it.qty} - $${it.subtotal}%0A`;
-  });
-  msg += `--------------------%0A`;
-  msg += `Subtotal: $${payload.subtotal}%0A`;
-  msg += `Domicilio: $${payload.domicilio}%0A`;
-  msg += `TOTAL: $${payload.total}`;
+  // Mensaje WhatsApp
+    let mensaje=`📝 Pedido N°${numeroPedidoCliente}\n\nHola, quiero hacer el siguiente pedido:\n\n`;
+    carrito.forEach(it=>mensaje+=`• ${it.nombre} x${it.qty} - $${fmt(it.precio*it.qty)}\n`);
+    mensaje+=`\n📍 Dirección: ${direccion.value.trim()}`;
+    mensaje+=`\n📱 Celular: ${celular.value.trim()}`;
+    mensaje+=`\nSubtotal: $${fmt(sub)}\nDomicilio: $${fmt(COSTO_DOMICILIO)}\n💰 Total: $${fmt(total)}`;
+    if (metodo.value === "Efectivo") {
+      const monto = document.getElementById("monto-efectivo").value;
+      mensaje += `\n💵 Pago con: $${fmt(monto)}`;
+    } else {
+      mensaje += `\n📱 Pago por Nequi a este número: ${NUMERO_NEQUI}`;
+    }
+    window.open(`https://wa.me/${NUMERO_WHATSAPP}?text=${encodeURIComponent(mensaje)}`,"_blank");
 
-  // Abrir WhatsApp
-  const url = `https://wa.me/${NUMERO_WHATSAPP}?text=${msg}`;
-  window.open(url, "_blank");
+    // UI de confirmación bonita
+    const conf = document.getElementById("confirmacion");
+    conf.style.display = "block";
+    conf.innerHTML = `✅ Tu pedido N°${numeroPedidoCliente} está en preparación.`;
+
+    const cola = document.getElementById("cola-info");
+    cola.style.display = "block";
+    cola.textContent = `🍽️ En cocina vamos hasta el N°${ultimoEntregado}.`;
 
   // limpiar carrito y UI
     
@@ -332,5 +336,6 @@ cargarProductos();
 </script>
 </body>
 </html>
+
 
 
