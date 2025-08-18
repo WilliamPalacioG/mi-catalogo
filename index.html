@@ -87,7 +87,35 @@
 <div class="container" id="product-container" style="display:none;"></div>
 
 <!-- Botón flotante de seguimiento (nuevo) -->
-<button id="btn-seguimiento" title="Seguimiento de pedido" onclick="abrirSeguimiento()">📦Consulta Tu Pedido</button>
+<button id="btn-seguimiento" onclick="abrirSeguimiento()">📦 Seguimiento</button>
+
+<style>
+#btn-seguimiento {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background-color: #ff6600;
+  color: white;
+  border: none;
+  border-radius: 50px;
+  padding: 12px 20px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  gap: 8px; /* espacio entre 📦 y el texto */
+  box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+  transition: transform 0.2s, background-color 0.2s;
+  z-index: 9999;
+}
+
+#btn-seguimiento:hover {
+  background-color: #e65c00;
+  transform: scale(1.05);
+}
+</style>
+  
 
 <div class="btn-container">
   <button id="btn-pedido" onclick="abrirCarrito()">📦 Pedido <span id="contador">0</span></button>
@@ -400,4 +428,5 @@ cargarProductos();
 </script>
 </body>
 </html>
+
 
