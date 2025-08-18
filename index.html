@@ -308,9 +308,9 @@ async function actualizarBanner(){
     const pedidos=data.pedidos||{};
     const banner=document.getElementById("pedido-banner");
     if(pedidoCliente && pedidos.estadoCliente){
-      banner.textContent=`✅ Tu pedido N°${pedidoCliente} | 🔥 En cocina: N°${pedidos.pedidoEnPreparacion??"-"}`;
+      banner.textContent=`✅ Tu pedido N°${pedidoCliente} | 🔥 Preparando Pedido: N°${pedidos.pedidoEnPreparacion??"-"}`;
     }else{
-      banner.textContent=`🔥 En cocina: N°${pedidos.pedidoEnPreparacion??"-"}`;
+      banner.textContent=`🔥 Preparando Pedido: N°${pedidos.pedidoEnPreparacion??"-"}`;
     }
   }catch(e){
     document.getElementById("pedido-banner").textContent="⚠ Error cargando estado";
@@ -332,6 +332,7 @@ cargarProductos();
 </script>
 </body>
 </html>
+
 
 
 
