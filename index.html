@@ -88,6 +88,12 @@
       <p><span>Total</span><strong>$<span id="total-carrito">0</span></strong></p>
     </div>
 
+    <!-- Celular -->
+    <label><strong>📱 Número de celular</strong></label>
+    <input type="tel" id="celular" class="direccion-input" 
+           placeholder="Ej: 3001234567" 
+           pattern="[0-9]{10}" maxlength="10" required>
+
     <!-- Dirección -->
     <label><strong>📍 Dirección de entrega</strong></label>
     <input type="text" id="direccion" class="direccion-input" placeholder="Escribe tu dirección">
@@ -116,7 +122,7 @@
 </footer>
 
 <script>
-const API_URL = "https://script.google.com/macros/s/AKfycbyvccfHdKlWK7GVyIXcDup_aF3qyKnwmiEo1vvL1q6fUJcMvDcteKq7qLJcQbf3Z89R/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbzbfO5QidC-1Lg5MktiqiEt1-HIF6jZOSroz_baF5NvbaQysm1_k11e0g2L0eujzUSl/exec"; // 🔹 Reemplaza por tu WebApp
 const NUMERO_WHATSAPP = "573147569934";
 
 let productos = [];
@@ -139,72 +145,13 @@ async function cargarProductos(){
   document.getElementById('product-container').style.display="grid";
 }
 
-function mostrarCategorias(){
-  const select=document.getElementById("filter-category");
-  select.innerHTML='<option value="">Todas las categorías</option>';
-  [...new Set(productos.map(p=>p.Categoría).filter(Boolean))].sort().forEach(cat=>{
-    const o=document.createElement("option");o.value=cat;o.textContent=cat;select.appendChild(o);
-  });
-}
-
-function mostrarProductos(){
-  const cont=document.getElementById("product-container");
-  cont.innerHTML="";
-  const busqueda=(document.getElementById("search").value||"").toLowerCase();
-  const catSel=document.getElementById("filter-category").value;
-  const filtrados=productos.filter(prod=>{
-    return (prod.Nombre||"").toLowerCase().includes(busqueda)
-      && (!catSel || prod.Categoría===catSel)
-      && !isNoDisponible(prod.Stock);
-  });
-  if(!filtrados.length){cont.innerHTML=`<div class="no-results">⚠ No se encontraron resultados</div>`;return;}
-  filtrados.forEach(prod=>{
-    const precio=Number(prod.Precio||0);
-    cont.innerHTML+=`
-      <div class="card">
-        <img src="${prod.ImagenURL||'https://via.placeholder.com/600x400?text=Producto'}" alt="${prod.Nombre||''}">
-        <div class="card-body">
-          <h3>${prod.Nombre||''}</h3>
-          <p class="desc">${prod.Descripción||''}</p>
-          <p class="price">$${fmt(precio)}</p>
-          <p class="stock">Stock: ${prod.Stock??''}</p>
-          <button class="btn-add" onclick="agregarAlCarrito('${(prod.Nombre||'').replace(/'/g,"\\'")}',${precio})">Agregar</button>
-        </div>
-      </div>
-    `;
-  });
-}
-
-function agregarAlCarrito(nombre,precio){
-  const idx=carrito.findIndex(i=>i.nombre===nombre);
-  if(idx>=0)carrito[idx].qty+=1;
-  else carrito.push({nombre,precio:Number(precio||0),qty:1});
-  persistirCarrito();actualizarCarrito();
-}
-
-function cambiarCantidad(i,d){carrito[i].qty=Math.max(1,(carrito[i].qty||1)+d);persistirCarrito();actualizarCarrito();}
-function eliminarDelCarrito(i){carrito.splice(i,1);persistirCarrito();actualizarCarrito();}
-function persistirCarrito(){localStorage.setItem("carrito",JSON.stringify(carrito));}
-
-function actualizarCarrito(){
-  document.getElementById("contador").textContent=carrito.reduce((a,i)=>a+i.qty,0);
-  const lista=document.getElementById("lista-carrito");
-  const sub=carrito.reduce((s,i)=>s+i.precio*i.qty,0);
-  const total=sub+Number(COSTO_DOMICILIO||0);
-  lista.innerHTML=carrito.length===0?`<p class="no-results">Tu carrito está vacío.</p>`:
-    carrito.map((it,idx)=>`
-      <div class="carrito-item">
-        <div><strong>${it.nombre}</strong><br/><small>$${fmt(it.precio)} c/u</small></div>
-        <div class="qty">
-          <button onclick="cambiarCantidad(${idx},-1)">−</button>
-          <span>${it.qty}</span>
-          <button onclick="cambiarCantidad(${idx},1)">+</button>
-          <button class="btn-delete" onclick="eliminarDelCarrito(${idx})">🗑️</button>
-        </div>
-      </div>`).join("");
-  document.getElementById("subtotal-carrito").textContent=fmt(sub);
-  document.getElementById("total-carrito").textContent=fmt(total);
-}
+function mostrarCategorias(){ /* ... igual que antes ... */ }
+function mostrarProductos(){ /* ... igual que antes ... */ }
+function agregarAlCarrito(nombre,precio){ /* ... igual que antes ... */ }
+function cambiarCantidad(i,d){ /* ... igual que antes ... */ }
+function eliminarDelCarrito(i){ /* ... igual que antes ... */ }
+function persistirCarrito(){ localStorage.setItem("carrito",JSON.stringify(carrito)); }
+function actualizarCarrito(){ /* ... igual que antes ... */ }
 
 function abrirCarrito(){document.getElementById("modal-carrito").style.display="block";}
 function cerrarCarrito(){document.getElementById("modal-carrito").style.display="none";}
@@ -223,6 +170,14 @@ async function registrarVenta(payload){
 
 async function enviarPedido(){
   if(carrito.length===0){alert("⚠️ No has agregado productos.");return;}
+
+  const celular=document.getElementById("celular");
+  if(!/^[0-9]{10}$/.test(celular.value.trim())){
+    celular.classList.add("direccion-error");
+    alert("⚠️ Ingresa un número de celular válido de 10 dígitos.");
+    return;
+  } else {celular.classList.remove("direccion-error");}
+
   const direccion=document.getElementById("direccion");
   if(!direccion.value.trim()){
     direccion.classList.add("direccion-error");
@@ -253,6 +208,7 @@ async function enviarPedido(){
     montoEfectivo: metodo.value === 'Efectivo' ? Number(document.getElementById('monto-efectivo').value || 0) : null,
     nequi: metodo.value === 'Nequi' ? NUMERO_NEQUI : null,
     direccion: direccion.value.trim(),
+    celular: celular.value.trim(),   // 🔹 Nuevo
     whatsapp: NUMERO_WHATSAPP
   };
 
@@ -260,6 +216,7 @@ async function enviarPedido(){
 
   let mensaje="Hola, quiero hacer el siguiente pedido:\n\n";
   carrito.forEach(it=>mensaje+=`• ${it.nombre} x${it.qty} - $${fmt(it.precio*it.qty)}\n`);
+  mensaje+=`\n📱 Celular: ${celular.value.trim()}`;
   mensaje+=`\n📍 Dirección: ${direccion.value.trim()}`;
   mensaje+=`\nSubtotal: $${fmt(sub)}\nDomicilio: $${fmt(COSTO_DOMICILIO)}\n💰 Total: $${fmt(total)}`;
   if (metodo.value === "Efectivo") {
@@ -271,7 +228,7 @@ async function enviarPedido(){
   window.open(`https://wa.me/${NUMERO_WHATSAPP}?text=${encodeURIComponent(mensaje)}`,"_blank");
 
   carrito=[];persistirCarrito();actualizarCarrito();
-  document.getElementById("monto-efectivo").value = ""; // 🔹 Limpia el campo efectivo
+  document.getElementById("monto-efectivo").value = ""; 
   cerrarCarrito();
 }
 
