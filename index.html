@@ -97,17 +97,19 @@
   background-color: #ff6600;
   color: white;
   border: none;
-  border-radius: 50px;
+  border-radius: 30px; /* pastilla en vez de círculo */
   padding: 12px 20px;
   cursor: pointer;
   font-size: 16px;
   font-weight: bold;
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 8px; /* espacio entre 📦 y el texto */
   box-shadow: 0 4px 6px rgba(0,0,0,0.2);
   transition: transform 0.2s, background-color 0.2s;
   z-index: 9999;
+  white-space: nowrap; /* evita que el texto se parta */
 }
 
 #btn-seguimiento:hover {
@@ -428,5 +430,6 @@ cargarProductos();
 </script>
 </body>
 </html>
+
 
 
