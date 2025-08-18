@@ -271,7 +271,8 @@ async function enviarPedido(){
     alert(`✅ Tu pedido N°${resp.numeroPedido} está en preparación`);
 
   // Construir mensaje para WhatsApp
-  let msg = `📋 Pedido N°${resp.numeroPedido}%0A`;
+    let mensaje=`📝 Pedido N°${resp.numeroPedido}\n\nHola, quiero hacer el siguiente pedido:\n\n`;
+   //let msg = `📋 Pedido N°${resp.numeroPedido}%0A`;
   msg += `📍 Dirección: ${payload.direccion}%0A`;
   msg += `📱 Celular: ${payload.celular}%0A`;
   msg += `💳 Pago: ${payload.metodoPago}`;
@@ -332,6 +333,7 @@ cargarProductos();
 </script>
 </body>
 </html>
+
 
 
 
