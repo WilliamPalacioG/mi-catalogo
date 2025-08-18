@@ -57,8 +57,8 @@
   .nequi-number{font-weight:700;color:#000;background:#fff;padding:4px 8px;border-radius:6px;border:1px solid #ccc}
   .copy-btn{padding:4px 8px;font-size:.8rem;background:var(--brand1);color:#fff;border:none;border-radius:6px;cursor:pointer}
   .copy-btn:hover{background:var(--brand2)}
-  .direccion-input{width:100%;padding:6px;border:1px solid #ccc;border-radius:6px;margin-top:6px}
-  .direccion-error{border-color:var(--danger)!important;background:#ffe5e5}
+  .direccion-input, .celular-input{width:100%;padding:6px;border:1px solid #ccc;border-radius:6px;margin-top:6px}
+  .input-error{border-color:var(--danger)!important;background:#ffe5e5}
   @media (min-width:768px){.card img{height:200px}}
 </style>
 </head>
@@ -88,15 +88,13 @@
       <p><span>Total</span><strong>$<span id="total-carrito">0</span></strong></p>
     </div>
 
-    <!-- Celular -->
-    <label><strong>📱 Número de celular</strong></label>
-    <input type="tel" id="celular" class="direccion-input" 
-           placeholder="Ej: 3001234567" 
-           pattern="[0-9]{10}" maxlength="10" required>
-
     <!-- Dirección -->
     <label><strong>📍 Dirección de entrega</strong></label>
     <input type="text" id="direccion" class="direccion-input" placeholder="Escribe tu dirección">
+
+    <!-- Celular -->
+    <label><strong>📱 Número de celular</strong></label>
+    <input type="tel" id="celular" class="celular-input" placeholder="Ej: 3001234567" maxlength="10" pattern="[0-9]{10}">
 
     <!-- Método de pago -->
     <div class="payment-section">
@@ -122,7 +120,7 @@
 </footer>
 
 <script>
-const API_URL = "https://script.google.com/macros/s/AKfycbzbfO5QidC-1Lg5MktiqiEt1-HIF6jZOSroz_baF5NvbaQysm1_k11e0g2L0eujzUSl/exec"; // 🔹 Reemplaza por tu WebApp
+const API_URL = "https://script.google.com/macros/s/AKfycbwmia0PuEJjl0FyzXYAbYuc9EChm0v_yo85etBWfMN1gTHbDD2J6-ETKgUWqjdTAjdU/exec"; // 🔹 Cambia por tu URL publicada
 const NUMERO_WHATSAPP = "573147569934";
 
 let productos = [];
@@ -145,13 +143,72 @@ async function cargarProductos(){
   document.getElementById('product-container').style.display="grid";
 }
 
-function mostrarCategorias(){ /* ... igual que antes ... */ }
-function mostrarProductos(){ /* ... igual que antes ... */ }
-function agregarAlCarrito(nombre,precio){ /* ... igual que antes ... */ }
-function cambiarCantidad(i,d){ /* ... igual que antes ... */ }
-function eliminarDelCarrito(i){ /* ... igual que antes ... */ }
-function persistirCarrito(){ localStorage.setItem("carrito",JSON.stringify(carrito)); }
-function actualizarCarrito(){ /* ... igual que antes ... */ }
+function mostrarCategorias(){
+  const select=document.getElementById("filter-category");
+  select.innerHTML='<option value="">Todas las categorías</option>';
+  [...new Set(productos.map(p=>p.Categoría).filter(Boolean))].sort().forEach(cat=>{
+    const o=document.createElement("option");o.value=cat;o.textContent=cat;select.appendChild(o);
+  });
+}
+
+function mostrarProductos(){
+  const cont=document.getElementById("product-container");
+  cont.innerHTML="";
+  const busqueda=(document.getElementById("search").value||"").toLowerCase();
+  const catSel=document.getElementById("filter-category").value;
+  const filtrados=productos.filter(prod=>{
+    return (prod.Nombre||"").toLowerCase().includes(busqueda)
+      && (!catSel || prod.Categoría===catSel)
+      && !isNoDisponible(prod.Stock);
+  });
+  if(!filtrados.length){cont.innerHTML=`<div class="no-results">⚠ No se encontraron resultados</div>`;return;}
+  filtrados.forEach(prod=>{
+    const precio=Number(prod.Precio||0);
+    cont.innerHTML+=`
+      <div class="card">
+        <img src="${prod.ImagenURL||'https://via.placeholder.com/600x400?text=Producto'}" alt="${prod.Nombre||''}">
+        <div class="card-body">
+          <h3>${prod.Nombre||''}</h3>
+          <p class="desc">${prod.Descripción||''}</p>
+          <p class="price">$${fmt(precio)}</p>
+          <p class="stock">Stock: ${prod.Stock??''}</p>
+          <button class="btn-add" onclick="agregarAlCarrito('${(prod.Nombre||'').replace(/'/g,"\\'")}',${precio})">Agregar</button>
+        </div>
+      </div>
+    `;
+  });
+}
+
+function agregarAlCarrito(nombre,precio){
+  const idx=carrito.findIndex(i=>i.nombre===nombre);
+  if(idx>=0)carrito[idx].qty+=1;
+  else carrito.push({nombre,precio:Number(precio||0),qty:1});
+  persistirCarrito();actualizarCarrito();
+}
+
+function cambiarCantidad(i,d){carrito[i].qty=Math.max(1,(carrito[i].qty||1)+d);persistirCarrito();actualizarCarrito();}
+function eliminarDelCarrito(i){carrito.splice(i,1);persistirCarrito();actualizarCarrito();}
+function persistirCarrito(){localStorage.setItem("carrito",JSON.stringify(carrito));}
+
+function actualizarCarrito(){
+  document.getElementById("contador").textContent=carrito.reduce((a,i)=>a+i.qty,0);
+  const lista=document.getElementById("lista-carrito");
+  const sub=carrito.reduce((s,i)=>s+i.precio*i.qty,0);
+  const total=sub+Number(COSTO_DOMICILIO||0);
+  lista.innerHTML=carrito.length===0?`<p class="no-results">Tu carrito está vacío.</p>`:
+    carrito.map((it,idx)=>`
+      <div class="carrito-item">
+        <div><strong>${it.nombre}</strong><br/><small>$${fmt(it.precio)} c/u</small></div>
+        <div class="qty">
+          <button onclick="cambiarCantidad(${idx},-1)">−</button>
+          <span>${it.qty}</span>
+          <button onclick="cambiarCantidad(${idx},1)">+</button>
+          <button class="btn-delete" onclick="eliminarDelCarrito(${idx})">🗑️</button>
+        </div>
+      </div>`).join("");
+  document.getElementById("subtotal-carrito").textContent=fmt(sub);
+  document.getElementById("total-carrito").textContent=fmt(total);
+}
 
 function abrirCarrito(){document.getElementById("modal-carrito").style.display="block";}
 function cerrarCarrito(){document.getElementById("modal-carrito").style.display="none";}
@@ -170,20 +227,23 @@ async function registrarVenta(payload){
 
 async function enviarPedido(){
   if(carrito.length===0){alert("⚠️ No has agregado productos.");return;}
-
-  const celular=document.getElementById("celular");
-  if(!/^[0-9]{10}$/.test(celular.value.trim())){
-    celular.classList.add("direccion-error");
-    alert("⚠️ Ingresa un número de celular válido de 10 dígitos.");
-    return;
-  } else {celular.classList.remove("direccion-error");}
-
   const direccion=document.getElementById("direccion");
+  const celular=document.getElementById("celular");
+
+  // Validación dirección
   if(!direccion.value.trim()){
-    direccion.classList.add("direccion-error");
+    direccion.classList.add("input-error");
     alert("⚠️ Debes ingresar la dirección.");
     return;
-  } else {direccion.classList.remove("direccion-error");}
+  } else {direccion.classList.remove("input-error");}
+
+  // Validación celular
+  const regex=/^[0-9]{10}$/;
+  if(!regex.test(celular.value.trim())){
+    celular.classList.add("input-error");
+    alert("⚠️ Ingresa un número de celular válido (10 dígitos).");
+    return;
+  } else {celular.classList.remove("input-error");}
 
   const metodo=document.querySelector('input[name="metodoPago"]:checked');
   if(!metodo){alert("⚠️ Selecciona un método de pago.");return;}
@@ -208,7 +268,7 @@ async function enviarPedido(){
     montoEfectivo: metodo.value === 'Efectivo' ? Number(document.getElementById('monto-efectivo').value || 0) : null,
     nequi: metodo.value === 'Nequi' ? NUMERO_NEQUI : null,
     direccion: direccion.value.trim(),
-    celular: celular.value.trim(),   // 🔹 Nuevo
+    celular: celular.value.trim(),
     whatsapp: NUMERO_WHATSAPP
   };
 
@@ -216,30 +276,28 @@ async function enviarPedido(){
 
   let mensaje="Hola, quiero hacer el siguiente pedido:\n\n";
   carrito.forEach(it=>mensaje+=`• ${it.nombre} x${it.qty} - $${fmt(it.precio*it.qty)}\n`);
-  mensaje+=`\n📱 Celular: ${celular.value.trim()}`;
   mensaje+=`\n📍 Dirección: ${direccion.value.trim()}`;
+  mensaje+=`\n📱 Celular: ${celular.value.trim()}`;
   mensaje+=`\nSubtotal: $${fmt(sub)}\nDomicilio: $${fmt(COSTO_DOMICILIO)}\n💰 Total: $${fmt(total)}`;
-  if (metodo.value === "Efectivo") {
-    const monto = document.getElementById("monto-efectivo").value;
-    mensaje += `\n💵 Pago con: $${fmt(monto)}`;
-  } else {
-    mensaje += `\n📱 Pago por Nequi a este número: ${NUMERO_NEQUI}`;
-  }
+  if (metodo.value==="Efectivo") mensaje+=`\nPago en efectivo con: $${fmt(document.getElementById("monto-efectivo").value)}`;
+  if (metodo.value==="Nequi") mensaje+=`\nPago por Nequi al número ${NUMERO_NEQUI}`;
+
   window.open(`https://wa.me/${NUMERO_WHATSAPP}?text=${encodeURIComponent(mensaje)}`,"_blank");
 
   carrito=[];persistirCarrito();actualizarCarrito();
-  document.getElementById("monto-efectivo").value = ""; 
+  document.getElementById("monto-efectivo").value="";
   cerrarCarrito();
 }
 
-document.getElementById("search").addEventListener("input",mostrarProductos);
-document.getElementById("filter-category").addEventListener("change",mostrarProductos);
-document.querySelector('input[value="Efectivo"]').addEventListener("change",()=>{document.getElementById("efectivo-box").style.display="block";document.getElementById("nequi-box").style.display="none";});
-document.querySelector('input[value="Nequi"]').addEventListener("change",()=>{document.getElementById("nequi-box").style.display="flex";document.getElementById("efectivo-box").style.display="none";});
-
-cargarProductos();
+document.addEventListener("DOMContentLoaded",()=>{
+  cargarProductos();
+  document.querySelectorAll('input[name="metodoPago"]').forEach(r=>{
+    r.addEventListener("change",()=>{
+      document.getElementById("efectivo-box").style.display = r.value==="Efectivo" && r.checked ? "block":"none";
+      document.getElementById("nequi-box").style.display = r.value==="Nequi" && r.checked ? "flex":"none";
+    });
+  });
+});
 </script>
 </body>
 </html>
-
-
