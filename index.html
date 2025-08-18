@@ -230,6 +230,7 @@ async function registrarVenta(payload){
   }catch(e){return { ok:false, error:String(e) }}
 }
 
+
 async function enviarPedido(){
   if(carrito.length===0){alert("⚠️ No has agregado productos.");return;}
   const direccion=document.getElementById("direccion");
@@ -267,31 +268,27 @@ async function enviarPedido(){
 
   const resp = await registrarVenta(payload);
   if(resp.ok){
-    pedidoCliente = resp.numeroPedido; // guardamos el pedido
+    pedidoCliente = resp.numeroPedido;
+
+    // construir mensaje para WhatsApp
+    let mensaje = `📝 Pedido N°${resp.numeroPedido}\n\n`;
+    mensaje += carrito.map(i => `- ${i.qty} x ${i.nombre} ($${fmt(i.precio)} c/u)`).join("\n");
+    mensaje += `\n\n📍 Dirección: ${payload.direccion}`;
+    mensaje += `\n📱 Celular: ${payload.celular}`;
+    mensaje += `\n💳 Pago: ${payload.metodoPago}`;
+    if(payload.metodoPago === "Efectivo"){
+      mensaje += `\n💵 Con: $${fmt(payload.montoEfectivo)}`;
+    }
+    if(payload.metodoPago === "Nequi"){
+      mensaje += `\n📲 Nequi: ${payload.nequi}`;
+    }
+    mensaje += `\n\nSubtotal: $${fmt(sub)}\nDomicilio: $${fmt(payload.domicilio)}\nTOTAL: $${fmt(total)}`;
+
+    // abrir WhatsApp con encodeURIComponent
+    let url = `https://wa.me/${NUMERO_WHATSAPP}?text=${encodeURIComponent(mensaje)}`;
+    window.open(url, "_blank");
+
     alert(`✅ Tu pedido N°${resp.numeroPedido} está en preparación`);
-
-  // Construir mensaje para WhatsApp
-    let mensaje=`📝 Pedido N°${resp.numeroPedido}\n\nHola, quiero hacer el siguiente pedido:\n\n`;
-   //let msg = `📋 Pedido N°${resp.numeroPedido}%0A`;
-  msg += `📍 Dirección: ${payload.direccion}%0A`;
-  msg += `📱 Celular: ${payload.celular}%0A`;
-  msg += `💳 Pago: ${payload.metodoPago}`;
-  if(payload.metodoPago==="Efectivo") msg += ` (con $${payload.montoEfectivo})`;
-  msg += `%0A--------------------%0A`;
-  payload.items.forEach(it=>{
-    msg += `${it.nombre} x${it.qty} - $${it.subtotal}%0A`;
-  });
-  msg += `--------------------%0A`;
-  msg += `Subtotal: $${payload.subtotal}%0A`;
-  msg += `Domicilio: $${payload.domicilio}%0A`;
-  msg += `TOTAL: $${payload.total}`;
-
-  // Abrir WhatsApp
-  const url = `https://wa.me/${NUMERO_WHATSAPP}?text=${msg}`;
-  window.open(url, "_blank");
-
-  // limpiar carrito y UI
-    
     carrito=[];persistirCarrito();actualizarCarrito();cerrarCarrito();
     document.getElementById("monto-efectivo").value="";
     actualizarBanner();
@@ -299,6 +296,8 @@ async function enviarPedido(){
     alert("❌ Error al registrar pedido: "+resp.error);
   }
 }
+
+
 
 async function actualizarBanner(){
   try{
@@ -333,6 +332,7 @@ cargarProductos();
 </script>
 </body>
 </html>
+
 
 
 
