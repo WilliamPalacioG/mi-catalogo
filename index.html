@@ -22,7 +22,9 @@
   *{box-sizing:border-box}
   body{font-family:'Segoe UI', Arial, sans-serif;margin:0;color:var(--text);background:var(--bg);}
   header{background:linear-gradient(135deg,var(--brand1),var(--brand2));color:#fff;text-align:center;padding:1rem;font-size:1.8rem;font-weight:700;position:sticky;top:0;z-index:10;}
-  .controls{display:flex;flex-wrap:wrap;gap:.75rem;justify-content:center;padding:1rem;background:#fff;box-shadow:0 2px 6px rgba(0,0,0,.05)}
+  .controls{display:flex;flex-wrap:wrap;gap:.75rem;justify-content:center;padding:1rem;background:#fff;box-shadow:0 2px 6px rgba(0,0,0,.05);position: sticky;
+  top: 60px; /* justo debajo del header */
+  z-index: 9;}
   .controls input,.controls select{padding:.65rem .9rem;border:1px solid #ddd;border-radius:8px;font-size:1rem;min-width:240px}
   .container{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1rem;padding:1rem 1rem 5rem;max-width:1200px;margin:auto}
   .no-results{grid-column:1/-1;text-align:center;color:var(--muted);padding:1rem}
@@ -331,7 +333,7 @@
     numeroPedidoCliente = resp.numeroPedido || null;
 
     // Mensaje WhatsApp
-    let mensaje="Hola, quiero hacer el siguiente pedido:\n\n";
+    let mensaje=`📝 Pedido N°${numeroPedidoCliente}\n\nHola, quiero hacer el siguiente pedido:\n\n`;
     carrito.forEach(it=>mensaje+=`• ${it.nombre} x${it.qty} - $${fmt(it.precio*it.qty)}\n`);
     mensaje+=`\n📍 Dirección: ${direccion.value.trim()}`;
     mensaje+=`\n📱 Celular: ${celular.value.trim()}`;
@@ -418,3 +420,4 @@
 </script>
 </body>
 </html>
+
