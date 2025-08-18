@@ -282,7 +282,7 @@ async function enviarPedido(){
     if(payload.metodoPago === "Nequi"){
       mensaje += `\n📲 Nequi: ${payload.nequi}`;
     }
-    mensaje += `\n\nSubtotal: $${fmt(sub)}\nDomicilio: $${fmt(payload.domicilio)}\nTOTAL: $${fmt(total)}`;
+    mensaje += `\n\nSubtotal: $${fmt(sub)}\nDomicilio: $${fmt(payload.domicilio)}\n\nTOTAL: $${fmt(total)}`;
 
     // abrir WhatsApp con encodeURIComponent
     let url = `https://wa.me/${NUMERO_WHATSAPP}?text=${encodeURIComponent(mensaje)}`;
@@ -332,6 +332,7 @@ cargarProductos();
 </script>
 </body>
 </html>
+
 
 
 
