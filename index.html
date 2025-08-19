@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!DOCTYPE html> 
 <html lang="es">
 <head>
 <meta charset="UTF-8" />
@@ -38,24 +38,6 @@
   #btn-pedido{position:fixed;right:16px;bottom:16px;z-index:1000;background:var(--ok);color:#fff;border:0;border-radius:999px;padding:.85rem 1.1rem;font-weight:700;box-shadow:0 6px 16px rgba(0,0,0,.25);cursor:pointer}
   #contador{position:absolute;top:-6px;right:-6px;background:var(--danger);color:#fff;font-size:.8rem;font-weight:700;line-height:1;padding:.3rem .45rem;border-radius:999px}
   .btn-container{position:fixed;right:16px;bottom:16px}
-
-  /* === Botón flotante de seguimiento (nuevo) === */
-  #btn-seguimiento {position: fixed;bottom: 20px;
-  left: 20px; /* 👉 ahora al lado izquierdo */
-  background-color: #ff6600; /* Naranja */
-  color: white; border: none;border-radius: 50px; /* pastilla como el verde */
-  padding: 10px 18px;cursor: pointer;font-size: 15px;font-weight: bold;
-  display: flex;align-items: center;
-  gap: 6px; box-shadow: 0 4px 6px rgba(0,0,0,0.2);
-  transition: background-color 0.2s, transform 0.2s;
-  z-index: 9999;
-
-  }
-  #btn-seguimiento:hover {
-  background-color: #e65c00; /* más oscuro al pasar el mouse */
-  transform: scale(1.05);
-}
-
   .modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1100;padding:20px}
   .modal-content{background:#fff;border-radius:12px;max-width:460px;margin:auto;position:relative;padding:18px}
   .modal h3{margin:.2rem 0 1rem}
@@ -94,18 +76,11 @@
 <div id="state" class="loading">Cargando productos…</div>
 <div class="container" id="product-container" style="display:none;"></div>
 
-<!-- Botón flotante de seguimiento (nuevo) -->
-<button id="btn-seguimiento" onclick="abrirSeguimiento()">
-  📦 Seguimiento
-</button>
-
-
-  
-
 <div class="btn-container">
   <button id="btn-pedido" onclick="abrirCarrito()">📦 Pedido <span id="contador">0</span></button>
 </div>
 
+<!-- Modal carrito -->
 <div id="modal-carrito" class="modal" aria-hidden="true">
   <div class="modal-content">
     <span class="close" onclick="cerrarCarrito()">&times;</span>
@@ -144,33 +119,22 @@
   </div>
 </div>
 
-<!-- Modal de seguimiento (nuevo) -->
-<div id="modal-seguimiento" class="modal" aria-hidden="true">
-  <div class="modal-content">
-    <span class="close" onclick="cerrarSeguimiento()">&times;</span>
-    <h3>📦 Seguimiento de pedido</h3>
-    <label for="input-num-pedido"><strong>Número de pedido</strong></label>
-    <input type="number" id="input-num-pedido" class="direccion-input" placeholder="Ej: 12">
-    <button class="btn-send" onclick="consultarEstadoPedido()">Consultar estado</button>
-    <div id="resultado-seguimiento" class="loading" style="display:none;"></div>
-  </div>
-</div>
-
 <footer style="text-align:center;padding:1rem;background:linear-gradient(135deg,var(--brand1),var(--brand2));color:#fff;margin-top:1rem;">
   © 2025 - SWP Delidiosa Wpalacio
 </footer>
 
 <script>
-const API_URL = "https://script.google.com/macros/s/AKfycbwOuwIMSlOq4kqM61V7EuU2uKfOHY1oPp9k67GkMXplsg_JWMzICp-kCcTpCnEXi79i/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbw7yYqukyX_qt6lLRkS3vXGWtEigLCAKmcgl8qaJbvOp5PiDMK39p6f54L1SfInL-ud/exec"; 
 const NUMERO_WHATSAPP = "573147569934";
 
 let productos = [];
 let COSTO_DOMICILIO = 0;
 let NUMERO_NEQUI = "";
 let carrito = JSON.parse(localStorage.getItem("carrito")) || [];
-let pedidoCliente = null; // guardará el número de pedido del cliente
+let pedidoCliente = null;
 const fmt = n => Number(n||0).toLocaleString();
-const isNoDisponible = v => (typeof v === 'string' && v.trim().toLowerCase() === 'no disponible') || Number(v) === 0;
+
+function isNoDisponible(v){return (typeof v === 'string' && v.trim().toLowerCase()==='no disponible')||Number(v)===0;}
 
 async function cargarProductos(){
   const res = await fetch(API_URL,{cache:"no-store"});
@@ -183,7 +147,7 @@ async function cargarProductos(){
   mostrarCategorias();mostrarProductos();actualizarCarrito();
   document.getElementById('state').style.display="none";
   document.getElementById('product-container').style.display="grid";
-  actualizarBanner(); // primer estado
+  actualizarBanner();
 }
 
 function mostrarCategorias(){
@@ -306,110 +270,58 @@ async function enviarPedido(){
   const resp = await registrarVenta(payload);
   if(resp.ok){
     pedidoCliente = resp.numeroPedido;
-
-    // construir mensaje para WhatsApp
-    let mensaje = `📝 Pedido N°${resp.numeroPedido}\n\n`;
-    mensaje += carrito.map(i => `- ${i.qty} x ${i.nombre} ($${fmt(i.precio)} c/u)`).join("\n");
-    mensaje += `\n\n📍 Dirección: ${payload.direccion}`;
-    mensaje += `\n📱 Celular: ${payload.celular}`;
-    mensaje += `\n💳 Pago: ${payload.metodoPago}`;
-    if(payload.metodoPago === "Efectivo"){
-      mensaje += `\n💵 Con: $${fmt(payload.montoEfectivo)}`;
-    }
-    if(payload.metodoPago === "Nequi"){
-      mensaje += `\n📲 Nequi: ${payload.nequi}`;
-    }
-    mensaje += `\n\nSubtotal: $${fmt(sub)}\nDomicilio: $${fmt(payload.domicilio)}\n\nTOTAL: $${fmt(total)}`;
-
-    // abrir WhatsApp con encodeURIComponent
-    let url = `https://wa.me/${NUMERO_WHATSAPP}?text=${encodeURIComponent(mensaje)}`;
-    window.open(url, "_blank");
-
     alert(`✅ Tu pedido N°${resp.numeroPedido} está en preparación`);
+
+    // Mensaje WhatsApp
+    let mensaje=`📝 Pedido N°${resp.numeroPedido}\n\nHola, quiero hacer el siguiente pedido:\n\n`;
+    carrito.forEach(i=>{mensaje+=`- ${i.nombre} x${i.qty} = $${fmt(i.precio*i.qty)}\n`;});
+    mensaje+=`\n📍 Dirección: ${direccion.value.trim()}`;
+    mensaje+=`\n📱 Celular: ${celular}`;
+    mensaje+=`\n💳 Método de pago: ${metodo.value}`;
+    if(metodo.value==="Efectivo"){mensaje+=`\n💵 Monto efectivo: $${fmt(document.getElementById("monto-efectivo").value)}`;}
+    if(metodo.value==="Nequi"){mensaje+=`\n📲 Nequi: ${NUMERO_NEQUI}`;}
+    mensaje+=`\n🚚 Domicilio: $${fmt(COSTO_DOMICILIO)}\n💰 Total: $${fmt(total)}\n\n¡Gracias por tu compra!`;
+
+    const url=`https://wa.me/${NUMERO_WHATSAPP}?text=${encodeURIComponent(mensaje)}`;
+    window.open(url,"_blank");
+
     carrito=[];persistirCarrito();actualizarCarrito();cerrarCarrito();
-    document.getElementById("monto-efectivo").value="";
-    actualizarBanner();
-  }else{
-    alert("❌ Error al registrar pedido: "+resp.error);
-  }
+  }else{alert("❌ Error registrando el pedido. Intenta de nuevo.");}
 }
-
-/* ===========================
-   Seguimiento de pedido (nuevo)
-   =========================== */
-function abrirSeguimiento(){
-  const m = document.getElementById("modal-seguimiento");
-  document.getElementById("resultado-seguimiento").style.display="none";
-  document.getElementById("input-num-pedido").value="";
-  m.style.display="block";
-  setTimeout(()=>document.getElementById("input-num-pedido").focus(),50);
-}
-function cerrarSeguimiento(){document.getElementById("modal-seguimiento").style.display="none";}
-
-async function consultarEstadoPedido(){
-  const input = document.getElementById("input-num-pedido");
-  const num = (input.value||"").trim();
-  const box = document.getElementById("resultado-seguimiento");
-  if(!num){ alert("Ingresa tu número de pedido"); input.focus(); return; }
-  box.style.display="block";
-  box.textContent="Consultando...";
-
-  try{
-    const res = await fetch(`${API_URL}?numeroPedido=${encodeURIComponent(num)}`, {cache:"no-store"});
-    const data = await res.json();
-    const estado = data && data.pedidos && data.pedidos.estadoCliente;
-
-    if(estado){
-      box.textContent = `Estado del pedido N°${num}: ${estado}`;
-      // Guardamos para que el banner también muestre el estado personalizado
-      pedidoCliente = Number(num);
-      actualizarBanner();
-    }else{
-      box.textContent = "No encontramos ese pedido. Revisa el número.";
-    }
-  }catch(err){
-    box.textContent = "Error consultando el estado. Intenta de nuevo.";
-  }
-}
-
-// Enter para consultar
-document.addEventListener("keydown", (e)=>{
-  const m = document.getElementById("modal-seguimiento");
-  if(m.style.display==="block" && e.key==="Enter"){
-    consultarEstadoPedido();
-  }
-});
 
 async function actualizarBanner(){
   try{
-    let url=API_URL;
-    if(pedidoCliente) url += `?numeroPedido=${pedidoCliente}`;
-    const res = await fetch(url,{cache:"no-store"});
+    const res = await fetch(API_URL+"?ventas=1",{cache:"no-store"});
     const data = await res.json();
-    const pedidos=data.pedidos||{};
-    const banner=document.getElementById("pedido-banner");
-    if(pedidoCliente && pedidos.estadoCliente){
-      banner.textContent=`✅ Tu pedido N°${pedidoCliente} | Estado: ${pedidos.estadoCliente} | 🔥 Preparando Pedido: N°${pedidos.pedidoEnPreparacion??"-"}`;
-    }else{
-      banner.textContent=`🔥 Preparando Pedido: N°${pedidos.pedidoEnPreparacion??"-"}`;
+    const ventas = data.ventas || [];
+    const pedidoPreparacion = ventas.find(v => v.Estado && v.Estado.trim() === "En preparación");
+
+    const banner = document.getElementById("pedido-banner");
+    if(pedidoPreparacion){
+      if(pedidoCliente){
+        banner.textContent = `✅ Tu pedido N°${pedidoCliente} | 🔥 Preparando Pedido: N°${pedidoPreparacion["N° Pedido"]}`;
+      } else {
+        banner.textContent = `🔥 Preparando Pedido: N°${pedidoPreparacion["N° Pedido"]}`;
+      }
+    } else {
+      banner.textContent = "✅ No hay pedidos en preparación";
     }
   }catch(e){
-    document.getElementById("pedido-banner").textContent="⚠ Error cargando estado";
+    console.error("Error actualizando banner",e);
   }
 }
 
 setInterval(actualizarBanner,30000);
 
-document.getElementById("search").addEventListener("input",mostrarProductos);
-document.getElementById("filter-category").addEventListener("change",mostrarProductos);
-document.querySelectorAll('input[name="metodoPago"]').forEach(r=>{
-  r.addEventListener("change",()=>{
-    document.getElementById("efectivo-box").style.display=r.value==="Efectivo"?"block":"none";
-    document.getElementById("nequi-box").style.display=r.value==="Nequi"?"flex":"none";
+window.addEventListener("DOMContentLoaded",()=>{
+  cargarProductos();
+  document.querySelectorAll('input[name="metodoPago"]').forEach(r=>{
+    r.addEventListener("change",()=>{
+      document.getElementById("efectivo-box").style.display=r.value==="Efectivo"?"block":"none";
+      document.getElementById("nequi-box").style.display=r.value==="Nequi"?"flex":"none";
+    });
   });
 });
-
-cargarProductos();
 </script>
 </body>
 </html>
