@@ -79,6 +79,7 @@
 
 <div class="btn-container">
   <button id="btn-pedido" onclick="abrirCarrito()">📦 Pedido <span id="contador">0</span></button>
+  <button id="btn-seguimiento" onclick="abrirSeguimiento()" style="margin-left:10px;background:#2196f3;">🔍 Seguimiento</button>
 </div>
 
 <div id="modal-carrito" class="modal" aria-hidden="true">
@@ -91,6 +92,18 @@
       <p><span>Domicilio</span><strong class="badge" id="domicilio-label">$0</strong></p>
       <p><span>Total</span><strong>$<span id="total-carrito">0</span></strong></p>
     </div>
+
+    <!-- Modal Seguimiento -->
+      <div id="modal-seguimiento" class="modal" aria-hidden="true">
+        <div class="modal-content">
+          <span class="close" onclick="cerrarSeguimiento()">&times;</span>
+          <h3>🔍 Seguimiento de Pedido</h3>
+          <input type="number" id="input-num-pedido" placeholder="Ingresa tu N° de pedido" style="width:100%;padding:8px;margin-top:10px;border:1px solid #ccc;border-radius:6px;">
+          <button class="btn-send" style="margin-top:10px;" onclick="consultarEstadoPedido()">Consultar</button>
+          <div id="resultado-seguimiento" style="margin-top:15px;font-weight:600;display:none;"></div>
+        </div>
+      </div>
+
 
     <!-- Dirección -->
     <label><strong>📍 Dirección de entrega</strong></label>
@@ -348,7 +361,55 @@ document.querySelectorAll('input[name="metodoPago"]').forEach(r=>{
 
 // Init
 cargarProductos();
+
+        /* ===========================
+         Seguimiento de pedido (nuevo)
+         =========================== */
+      function abrirSeguimiento(){
+        const m = document.getElementById("modal-seguimiento");
+        document.getElementById("resultado-seguimiento").style.display="none";
+        document.getElementById("input-num-pedido").value="";
+        m.style.display="block";
+        setTimeout(()=>document.getElementById("input-num-pedido").focus(),50);
+      }
+      function cerrarSeguimiento(){document.getElementById("modal-seguimiento").style.display="none";}
+      
+      async function consultarEstadoPedido(){
+        const input = document.getElementById("input-num-pedido");
+        const num = (input.value||"").trim();
+        const box = document.getElementById("resultado-seguimiento");
+        if(!num){ alert("Ingresa tu número de pedido"); input.focus(); return; }
+        box.style.display="block";
+        box.textContent="Consultando...";
+      
+        try{
+          const res = await fetch(`${API_URL}?numeroPedido=${encodeURIComponent(num)}`, {cache:"no-store"});
+          const data = await res.json();
+          const estado = data && data.pedidos && data.pedidos.estadoCliente;
+      
+          if(estado){
+            box.textContent = `Estado del pedido N°${num}: ${estado}`;
+            // Guardamos para que el banner también muestre el estado personalizado
+            pedidoCliente = Number(num);
+            actualizarBanner();
+          }else{
+            box.textContent = "No encontramos ese pedido. Revisa el número.";
+          }
+        }catch(err){
+          box.textContent = "Error consultando el estado. Intenta de nuevo.";
+        }
+      }
+      
+      // Enter para consultar
+      document.addEventListener("keydown", (e)=>{
+        const m = document.getElementById("modal-seguimiento");
+        if(m.style.display==="block" && e.key==="Enter"){
+          consultarEstadoPedido();
+        }
+      });
+
 </script>
 </body>
 </html>
+
 
