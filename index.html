@@ -77,10 +77,16 @@
 <div id="state" class="loading">Cargando productos…</div>
 <div class="container" id="product-container" style="display:none;"></div>
 
-<div class="btn-container">
+<div class="btn-container" style="display:flex;flex-direction:column;gap:12px;position:fixed;right:16px;bottom:16px;z-index:1000;">
+  <button id="btn-seguimiento" onclick="abrirSeguimiento()" 
+    style="background:#2196f3;color:#fff;border:0;border-radius:999px;padding:.85rem 1.1rem;font-weight:700;
+           box-shadow:0 6px 16px rgba(0,0,0,.25);cursor:pointer">
+    🔍 Seguimiento
+  </button>
   <button id="btn-pedido" onclick="abrirCarrito()">📦 Pedido <span id="contador">0</span></button>
-  <button id="btn-seguimiento" onclick="abrirSeguimiento()" style="margin-left:10px;background:#2196f3;">🔍 Seguimiento</button>
 </div>
+
+
 
 <div id="modal-carrito" class="modal" aria-hidden="true">
   <div class="modal-content">
@@ -411,5 +417,6 @@ cargarProductos();
 </script>
 </body>
 </html>
+
 
 
