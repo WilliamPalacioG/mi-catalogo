@@ -255,7 +255,7 @@ async function enviarPedido(){
     if(!monto){alert("⚠️ Ingresa con cuánto pagas.");return;}
   }
   if(metodo.value==="Nequi"){
-    if(!confirm("Recuerda enviar el soporte de pago después de que confirmemos para iniciar tu pedido")) return;
+    if(!confirm("Espera la CONFIRMACION para hacer y enviar el soporte de pago, para poder INICIAR tu pedido")) return;
   }
 
   const sub=carrito.reduce((s,i)=>s+i.precio*i.qty,0);
@@ -276,7 +276,7 @@ async function enviarPedido(){
   const resp = await registrarVenta(payload);
   if(resp.ok){
     pedidoCliente = resp.numeroPedido; // guarda el N° del cliente
-    alert(`✅ Tu pedido N°${resp.numeroPedido} está en preparación`);
+    alert(`✅ Tu pedido es el N°${resp.numeroPedido} está por comfirmar`);
 
     // Mensaje WhatsApp con saltos correctos
     let mensaje = `📝 Pedido N°${resp.numeroPedido}\n\nHola, quiero hacer el siguiente pedido:\n\n`;
@@ -286,9 +286,9 @@ async function enviarPedido(){
     mensaje += `\nSubtotal: $${fmt(sub)}\nDomicilio: $${fmt(COSTO_DOMICILIO)}\n💰 Total: $${fmt(total)}`;
     if (metodo.value === "Efectivo") {
       const monto = document.getElementById("monto-efectivo").value;
-      mensaje += `\n💵 Pago con: $${fmt(monto)}`;
+      mensaje += `\n💵 Pago con: $${fmt(monto)}\n\n Espero su comfirmacion`;
     } else {
-      mensaje += `\n📱 Pago por Nequi a este número: ${NUMERO_NEQUI}`;
+      mensaje += `\n📱 Pago por Nequi a este número: ${NUMERO_NEQUI}\n\n Espero su comfirmacion`;
     }
     window.open(`https://wa.me/${NUMERO_WHATSAPP}?text=${encodeURIComponent(mensaje)}`,"_blank");
 
@@ -351,3 +351,4 @@ cargarProductos();
 </script>
 </body>
 </html>
+
