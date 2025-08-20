@@ -130,28 +130,32 @@
 
     // ✅ Enviar correctamente el pedido al backend
     async function marcarPreparado(nro) {
-      if (!confirm(`¿Marcar el pedido #${nro} como Preparado?`)) return;
-
-      try {
-        const res = await fetch(API_URL + "?accion=marcarPreparado", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ numeroPedido: nro })
-        });
-
-        const data = await res.json();
-
-        if (data.ok) {
-          alert(`✅ Pedido #${nro} marcado como Preparado`);
-          cargarPedidos(); // refresca lista
-        } else {
-          alert("❌ Error: " + data.error);
+          if (!confirm(`¿Marcar el pedido #${nro} como Preparado?`)) return;
+        
+          try {
+            // 👇 Usar FormData en vez de JSON
+            const formData = new FormData();
+            formData.append("accion", "marcarPreparado");
+            formData.append("numeroPedido", nro);
+        
+            const res = await fetch(API_URL, {
+              method: "POST",
+              body: formData
+            });
+        
+            const data = await res.json();
+        
+            if (data.ok) {
+              alert(`✅ Pedido #${nro} marcado como Preparado`);
+              cargarPedidos();
+            } else {
+              alert("❌ Error: " + data.error);
+            }
+          } catch (err) {
+            alert("Error en conexión: " + err);
+          }
         }
-      } catch (err) {
-        alert("Error en conexión: " + err);
-      }
-    }
-
+ 
     // 🚀 Iniciar
     checkBackend();
     cargarPedidos();
@@ -159,3 +163,4 @@
   </script>
 </body>
 </html>
+
