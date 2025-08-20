@@ -37,7 +37,14 @@
   .btn-add:hover{background:#e68900}
   #btn-pedido{position:fixed;right:16px;bottom:16px;z-index:1000;background:var(--ok);color:#fff;border:0;border-radius:999px;padding:.85rem 1.1rem;font-weight:700;box-shadow:0 6px 16px rgba(0,0,0,.25);cursor:pointer}
   #contador{position:absolute;top:-6px;right:-6px;background:var(--danger);color:#fff;font-size:.8rem;font-weight:700;line-height:1;padding:.3rem .45rem;border-radius:999px}
-  .btn-container{position:fixed;right:16px;bottom:16px;flex-direction: column; /* 👉 apila verticalmente */gap: 12px;/* espacio entre botones */z-index: 1000;}
+  .btn-container{position: fixed;
+  right: 16px;
+  bottom: 16px;
+  display: flex;
+  flex-direction: column; /* 👈 los pone en columna */
+  align-items: flex-end;  /* 👈 los alinea al borde derecho */
+  gap: 12px;              /* 👈 espacio entre botones */
+  z-index: 1000;}
   .modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1100;padding:20px}
   .modal-content{background:#fff;border-radius:12px;max-width:460px;margin:auto;position:relative;padding:18px}
   .modal h3{margin:.2rem 0 1rem}
@@ -62,11 +69,12 @@
   .direccion-error{border-color:var(--danger)!important;background:#ffe5e5}
   .celular-input{width:100%;padding:6px;border:1px solid #ccc;border-radius:6px;margin-top:6px}
   .btn-floating {border: 0;border-radius: 999px;padding: .85rem 1.3rem;font-weight: 700;color: #fff;box-shadow: 0 6px 16px rgba(0,0,0,.25);cursor: pointer;display: flex;align-items: center;gap: .4rem;font-size: 1rem;}
-  #btn-pedido,
+  /* Estilo base de ambos botones */
+#btn-pedido,
 #btn-seguimiento {
   border: 0;
   border-radius: 999px;
-  padding: .85rem 1.1rem;
+  padding: .85rem 1.2rem;
   font-weight: 700;
   box-shadow: 0 6px 16px rgba(0,0,0,.25);
   cursor: pointer;
@@ -78,13 +86,13 @@
 
 /* Colores */
 #btn-pedido {
-  background: var(--ok);
+  background: var(--ok); /* verde */
 }
 #btn-seguimiento {
-  background: #2196f3;
+  background: #2196f3;   /* azul */
 }
 
-/* contador */
+/* contador pedido */
 #contador {
   margin-left: 6px;
   background: var(--danger);
@@ -454,6 +462,7 @@ cargarProductos();
 </script>
 </body>
 </html>
+
 
 
 
