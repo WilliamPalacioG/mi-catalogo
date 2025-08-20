@@ -6,8 +6,10 @@
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-100 p-6">
-  <h2 class="text-2xl font-bold mb-2">📋 Pedidos en preparación</h2>
-  <p id="backendStatus" class="mb-6 text-sm"></p>
+  <h2 class="text-2xl font-bold mb-6">📋 Pedidos en preparación</h2>
+
+  <!-- Estado del backend -->
+  <p id="backendStatus" class="text-sm mb-4 text-gray-600">⏳ Verificando backend...</p>
 
   <!-- Contenedor de pedidos -->
   <div id="pedidos" class="grid gap-4 md:grid-cols-2 lg:grid-cols-3"></div>
@@ -22,8 +24,26 @@
   </div>
 
   <script>
-    // 🔗 Pega aquí tu URL del backend (termina en /exec)
+    // 🔗 URL del backend (ya publicada)
     const API_URL = "https://script.google.com/macros/s/AKfycbx96Ms5d6js8BdDMuYIl6SwSbCcBVEh9WIA2Tqzh8IoNsTvfFjf8Xe-W09Ok5M8aiEw/exec";
+
+    // ✅ Verificar conexión con el backend
+    async function checkBackend() {
+      try {
+        const res = await fetch(API_URL + "?accion=pedidosPrep");
+        const data = await res.json();
+        if (data.ok) {
+          document.getElementById("backendStatus").innerHTML =
+            '<span class="text-green-600">Backend OK ✅</span>';
+        } else {
+          document.getElementById("backendStatus").innerHTML =
+            '<span class="text-red-600">Backend Error ❌</span>';
+        }
+      } catch (err) {
+        document.getElementById("backendStatus").innerHTML =
+          '<span class="text-red-600">Backend sin conexión ❌</span>';
+      }
+    }
 
     async function cargarPedidos() {
       try {
@@ -31,18 +51,12 @@
         const data = await res.json();
 
         if (!data.ok) {
-          document.getElementById("backendStatus").innerHTML =
-            "<span class='text-red-600 font-semibold'>Backend Error ❌</span>";
+          console.error("Error en backend:", data);
           return;
         }
 
-        document.getElementById("backendStatus").innerHTML =
-          "<span class='text-green-600 font-semibold'>Backend OK ✅</span>";
-
         renderPedidos(data.pedidos);
       } catch (err) {
-        document.getElementById("backendStatus").innerHTML =
-          "<span class='text-red-600 font-semibold'>Error de conexión ❌</span>";
         console.error("Error cargando pedidos:", err);
       }
     }
@@ -63,6 +77,7 @@
         let itemsHTML = "";
 
         if (Array.isArray(p.items)) {
+          // Si ya viene como array JSON
           itemsHTML = p.items.map(it => `
             <div class="bg-gray-100 p-2 rounded mb-2">
               <p><b>🍔 ${it.nombre}</b></p>
@@ -92,15 +107,12 @@
           `).join("");
         }
 
-        // ⚡ Botones corregidos
         card.innerHTML = `
           <h4 class="font-bold text-lg mb-2">Pedido #${p.numeroPedido} - ${p.fecha}</h4>
           ${itemsHTML}
           <div class="flex gap-2">
-            <button onclick="verObs('${(p.observaciones || "Sin observaciones").replace(/'/g, "\\'")}')" 
-                    class="px-3 py-1 bg-blue-600 text-white rounded-lg">Ver obs.</button>
-            <button onclick="marcarPreparado(${p.numeroPedido})" 
-                    class="px-3 py-1 bg-green-600 text-white rounded-lg">Preparado</button>
+            <button onclick="verObs('${p.observaciones || "Sin observaciones"}')" class="px-3 py-1 bg-blue-500 text-white rounded-lg">Ver obs.</button>
+            <button onclick="marcarPreparado(${p.numeroPedido})" class="px-3 py-1 bg-green-500 text-white rounded-lg">Preparado</button>
           </div>
         `;
         cont.appendChild(card);
@@ -116,6 +128,7 @@
       document.getElementById("modal").classList.add("hidden");
     }
 
+    // ✅ Enviar correctamente el pedido al backend
     async function marcarPreparado(nro) {
       if (!confirm(`¿Marcar el pedido #${nro} como Preparado?`)) return;
 
@@ -125,6 +138,7 @@
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ numeroPedido: nro })
         });
+
         const data = await res.json();
 
         if (data.ok) {
@@ -138,10 +152,9 @@
       }
     }
 
-    // 🚀 Cargar pedidos al iniciar
+    // 🚀 Iniciar
+    checkBackend();
     cargarPedidos();
-
-    // 🔄 Recargar cada 10 segundos para ver cambios en vivo
     setInterval(cargarPedidos, 10000);
   </script>
 </body>
