@@ -107,16 +107,7 @@
       <p><span>Total</span><strong>$<span id="total-carrito">0</span></strong></p>
     </div>
 
-    <!-- Modal Seguimiento -->
-      <div id="modal-seguimiento" class="modal" aria-hidden="true">
-        <div class="modal-content">
-          <span class="close" onclick="cerrarSeguimiento()">&times;</span>
-          <h3>🔍 Seguimiento de Pedido</h3>
-          <input type="number" id="input-num-pedido" placeholder="Ingresa tu N° de pedido" style="width:100%;padding:8px;margin-top:10px;border:1px solid #ccc;border-radius:6px;">
-          <button class="btn-send" style="margin-top:10px;" onclick="consultarEstadoPedido()">Consultar</button>
-          <div id="resultado-seguimiento" style="margin-top:15px;font-weight:600;display:none;"></div>
-        </div>
-      </div>
+    
 
 
     <!-- Dirección -->
@@ -146,6 +137,17 @@
   </div>
 </div>
 
+ <!-- Modal Seguimiento -->
+      <div id="modal-seguimiento" class="modal" aria-hidden="true">
+        <div class="modal-content">
+          <span class="close" onclick="cerrarSeguimiento()">&times;</span>
+          <h3>🔍 Seguimiento de Pedido</h3>
+          <input type="number" id="input-num-pedido" placeholder="Ingresa tu N° de pedido" style="width:100%;padding:8px;margin-top:10px;border:1px solid #ccc;border-radius:6px;">
+          <button class="btn-send" style="margin-top:10px;" onclick="consultarEstadoPedido()">Consultar</button>
+          <div id="resultado-seguimiento" style="margin-top:15px;font-weight:600;display:none;"></div>
+        </div>
+      </div>
+  
 <footer style="text-align:center;padding:1rem;background:linear-gradient(135deg,var(--brand1),var(--brand2));color:#fff;margin-top:1rem;">
   © 2025 - SWP Delidiosa Wpalacio
 </footer>
@@ -425,6 +427,7 @@ cargarProductos();
 </script>
 </body>
 </html>
+
 
 
 
