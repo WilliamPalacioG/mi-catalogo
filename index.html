@@ -318,6 +318,12 @@ async function enviarPedido(){
   const celular=document.getElementById("celular").value.trim();
   if(!/^[0-9]{10}$/.test(celular)){alert("⚠️ Ingresa un celular válido de 10 dígitos.");return;}
 
+const obs=document.getElementById("obs");
+  if(!obs.value.trim()){obs.classList.add("obs-error");alert("⚠️ Debes ingresar alguna observacion ej Con Todo.");return;}
+  else {obs.classList.remove("obs-error");}
+
+  
+
   const metodo=document.querySelector('input[name="metodoPago"]:checked');
   if(!metodo){alert("⚠️ Selecciona un método de pago.");return;}
 
@@ -341,6 +347,7 @@ async function enviarPedido(){
     montoEfectivo: metodo.value === 'Efectivo' ? Number(document.getElementById('monto-efectivo').value||0) : "",
     nequi: metodo.value === 'Nequi' ? NUMERO_NEQUI : "",
     direccion: direccion.value.trim(),
+    obs: obs.value.trim(),
     celular: celular
   };
 
@@ -354,12 +361,13 @@ async function enviarPedido(){
     carrito.forEach(it => mensaje += `• ${it.nombre} x${it.qty} - $${fmt(it.precio*it.qty)}\n`);
     mensaje += `\n📍 Dirección: ${direccion.value.trim()}`;
     mensaje += `\n📱 Celular: ${celular}`;
+    mensaje += `\n📍 Obs: ${obs.value.trim()}`;
     mensaje += `\nSubtotal: $${fmt(sub)}\nDomicilio: $${fmt(COSTO_DOMICILIO)}\n💰 Total: $${fmt(total)}`;
     if (metodo.value === "Efectivo") {
       const monto = document.getElementById("monto-efectivo").value;
-      mensaje += `\n💵 Pago con: $${fmt(monto)}\n\n Espero su comfirmacion`;
+      mensaje += `\n💵 Pago con: $${fmt(monto)}\n\n Espero su confirmacion`;
     } else {
-      mensaje += `\n📱 Pago por Nequi a este número: ${NUMERO_NEQUI}\n\n Espero su comfirmacion`;
+      mensaje += `\n📱 Pago por Nequi a este número: ${NUMERO_NEQUI}\n\n Espero su confirmacion`;
     }
     window.open(`https://wa.me/${NUMERO_WHATSAPP}?text=${encodeURIComponent(mensaje)}`,"_blank");
 
@@ -387,7 +395,7 @@ async function actualizarBanner(){
     if (pedidoCliente && pedidos.estadoCliente) {
       // Cliente con pedido
       if (enPrep) {
-        banner.textContent = `✅ Tu pedido N°${pedidoCliente} | 🔥 Preparando Pedido: N°${enPrep}${fechaEnPrep ? ` del ${fechaEnPrep}` : ""}`;
+        banner.textContent = `✅ Tu pedido es el N°${pedidoCliente} | 🔥 Preparando Pedido: N°${enPrep}${fechaEnPrep ? ` del ${fechaEnPrep}` : ""}`;
       } else {
         banner.textContent = `✅ Tu pedido N°${pedidoCliente}`;
       }
@@ -469,6 +477,7 @@ cargarProductos();
 </script>
 </body>
 </html>
+
 
 
 
