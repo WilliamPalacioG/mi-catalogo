@@ -6,106 +6,132 @@
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-100 p-6">
-  <div class="max-w-4xl mx-auto">
-    <h1 class="text-2xl font-bold mb-4 flex items-center gap-2">
-      <span>📋 Pedidos en preparación</span>
-      <span id="status" class="text-sm font-normal"></span>
-    </h1>
-    <div id="pedidosContainer" class="grid md:grid-cols-2 gap-4"></div>
+  <h2 class="text-2xl font-bold mb-2">📋 Pedidos en preparación</h2>
+  <p id="status" class="text-sm mb-6"></p>
+
+  <!-- Contenedor de pedidos -->
+  <div id="pedidos" class="flex flex-col gap-4"></div>
+
+  <!-- Modal -->
+  <div id="modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+    <div class="bg-white p-6 rounded-xl shadow-lg w-96">
+      <h3 class="text-xl font-bold mb-4">Observaciones</h3>
+      <p id="obsText" class="mb-4"></p>
+      <button onclick="cerrarModal()" class="px-4 py-2 bg-gray-500 text-white rounded-lg">Cerrar</button>
+    </div>
   </div>
 
   <script>
+    // 🔗 URL de tu backend
     const API_URL = "https://script.google.com/macros/s/AKfycbxnbRThEirvswBApsaiAfxY6MLz3YZbLRD7MEdRo9lvX-ELiUUXvIknUXxCNABnGSr8/exec";
 
-    // Cargar pedidos
     async function cargarPedidos() {
       try {
-        const res = await fetch(API_URL + "?accion=pedidosPrep");
+        const res = await fetch(`${API_URL}?accion=pedidosPrep`);
         const data = await res.json();
 
-        if (!data.ok) throw new Error("Error al obtener pedidos");
+        if (!data.ok) {
+          document.getElementById("status").innerHTML = "❌ Error en backend";
+          return;
+        }
 
-        document.getElementById("status").innerHTML = 
-          `<span class='text-green-600'>Backend OK ✅</span>`;
-
-        mostrarPedidos(data.pedidos);
+        document.getElementById("status").innerHTML = `Backend OK ✅`;
+        renderPedidos(data.pedidos);
       } catch (err) {
-        document.getElementById("status").innerHTML =
-          `<span class='text-red-600'>Error ❌ ${err.message}</span>`;
+        document.getElementById("status").innerHTML = "❌ Error cargando pedidos";
+        console.error(err);
       }
     }
 
-    // Mostrar pedidos en pantalla
-    function mostrarPedidos(pedidos) {
-      const cont = document.getElementById("pedidosContainer");
+    function renderPedidos(pedidos) {
+      const cont = document.getElementById("pedidos");
       cont.innerHTML = "";
 
       if (pedidos.length === 0) {
-        cont.innerHTML = `<p class="text-gray-500">No hay pedidos en preparación</p>`;
+        cont.innerHTML = `<p class="text-gray-600">No hay pedidos en preparación 🚀</p>`;
         return;
       }
 
       pedidos.forEach(p => {
-        let itemsHTML = "";
+        const card = document.createElement("div");
+        card.className = "bg-white p-4 rounded-xl shadow hover:shadow-lg transition";
 
-        // 🔹 Si items viene como array, lo mostramos bien
+        // Procesar items (quitar guion y precio)
+        let itemsHTML = "";
         if (Array.isArray(p.items)) {
-          itemsHTML = p.items.map(i => `
-            <div class="bg-gray-50 p-2 rounded">
-              <b>🍔 ${i.nombre}</b><br>
-              Cantidad: ${i.qty || i.cantidad || 1}
+          itemsHTML = p.items.map(it => `
+            <div class="bg-gray-100 p-2 rounded mb-2">
+              <p><b>🍔 ${it.nombre}</b></p>
+              <p>Cantidad: ${it.cantidad}</p>
             </div>
           `).join("");
         } else {
-          // 🔹 Si es string, lo mostramos plano
-          itemsHTML = `<div class="bg-gray-50 p-2 rounded">${p.items}</div>`;
+          const partes = p.items.split(",");
+          let lista = [];
+          partes.forEach(item => {
+            let sinPrecio = item.split(" - ")[0].trim(); // quitar precio
+            const match = sinPrecio.match(/(.+)\sx(\d+)/i);
+            if (match) {
+              lista.push({ nombre: match[1].trim(), cantidad: Number(match[2]) });
+            } else {
+              lista.push({ nombre: sinPrecio, cantidad: 1 });
+            }
+          });
+          itemsHTML = lista.map(it => `
+            <div class="bg-gray-100 p-2 rounded mb-2">
+              <p><b>🍔 ${it.nombre}</b></p>
+              <p>Cantidad: ${it.cantidad}</p>
+            </div>
+          `).join("");
         }
 
-        const pedidoHTML = `
-          <div class="bg-white shadow rounded-xl p-4">
-            <h2 class="font-bold mb-2">Pedido #${p.numeroPedido} - ${p.fecha}</h2>
-            ${itemsHTML}
-            <div class="mt-2 flex gap-2">
-              <button onclick="verObs('${p.observaciones || ""}')"
-                class="bg-blue-500 text-white px-3 py-1 rounded">Ver obs.</button>
-              <button onclick="marcarPreparado(${p.numeroPedido})"
-                class="bg-green-600 text-white px-3 py-1 rounded">Preparado</button>
-            </div>
+        // Tarjeta final
+        card.innerHTML = `
+          <h4 class="font-bold text-lg mb-2">Pedido #${p.numeroPedido} - ${p.fecha}</h4>
+          ${itemsHTML}
+          <div class="flex gap-2">
+            <button onclick="verObs('${p.observaciones || "Sin observaciones"}')" 
+              class="px-3 py-1 bg-blue-500 text-white rounded-lg">Ver obs.</button>
+            <button onclick="marcarPreparado(${p.numeroPedido})" 
+              class="px-3 py-1 bg-green-500 text-white rounded-lg">Preparado</button>
           </div>
         `;
-        cont.innerHTML += pedidoHTML;
+        cont.appendChild(card);
       });
     }
 
-    // Mostrar observaciones
-    function verObs(obs) {
-      alert(obs && obs.trim() ? obs : "Sin observaciones");
+    function verObs(texto) {
+      document.getElementById("obsText").innerText = texto;
+      document.getElementById("modal").classList.remove("hidden");
     }
 
-    // Marcar pedido como preparado
-    async function marcarPreparado(numero) {
-      if (!confirm(`¿Marcar pedido #${numero} como preparado?`)) return;
+    function cerrarModal() {
+      document.getElementById("modal").classList.add("hidden");
+    }
+
+    async function marcarPreparado(nro) {
+      if (!confirm(`¿Marcar el pedido #${nro} como Entregado?`)) return;
       try {
-        const res = await fetch(API_URL + "?accion=marcarPreparado&numeroPedido=" + numero, {
+        const res = await fetch(API_URL + "?accion=marcarPreparado&numeroPedido=" + nro, {
           method: "POST"
         });
         const data = await res.json();
+
         if (data.ok) {
-          alert(`✅ Pedido #${numero} marcado como preparado`);
-          cargarPedidos();
+          alert(`✅ Pedido #${nro} marcado como Entregado`);
+          cargarPedidos(); // refresca lista
         } else {
           alert("❌ Error: " + data.error);
         }
       } catch (err) {
-        alert("❌ Error en conexión: " + err.message);
+        alert("Error en conexión: " + err);
       }
     }
 
-    // Recargar pedidos cada 5s
-    setInterval(cargarPedidos, 5000);
+    // 🚀 Cargar pedidos al iniciar
     cargarPedidos();
+    setInterval(cargarPedidos, 10000);
   </script>
 </body>
 </html>
-
 
