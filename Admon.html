@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Gestión de Pedidos</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 p-6">
+  <h2 class="text-2xl font-bold mb-2">📋 Pedidos en preparación</h2>
+  <p id="backendStatus" class="mb-6 text-sm"></p>
+
+  <!-- Contenedor de pedidos -->
+  <div id="pedidos" class="grid gap-4 md:grid-cols-2 lg:grid-cols-3"></div>
+
+  <!-- Modal -->
+  <div id="modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+    <div class="bg-white p-6 rounded-xl shadow-lg w-96">
+      <h3 class="text-xl font-bold mb-4">Observaciones</h3>
+      <p id="obsText" class="mb-4"></p>
+      <button onclick="cerrarModal()" class="px-4 py-2 bg-gray-500 text-white rounded-lg">Cerrar</button>
+    </div>
+  </div>
+
+  <script>
+    // 🔗 Pega aquí tu URL del backend (termina en /exec)
+    const API_URL = "https://script.google.com/macros/s/AKfycbx96Ms5d6js8BdDMuYIl6SwSbCcBVEh9WIA2Tqzh8IoNsTvfFjf8Xe-W09Ok5M8aiEw/exec";
+
+    async function cargarPedidos() {
+      try {
+        const res = await fetch(`${API_URL}?accion=pedidosPrep`);
+        const data = await res.json();
+
+        if (!data.ok) {
+          document.getElementById("backendStatus").innerHTML =
+            "<span class='text-red-600 font-semibold'>Backend Error ❌</span>";
+          return;
+        }
+
+        document.getElementById("backendStatus").innerHTML =
+          "<span class='text-green-600 font-semibold'>Backend OK ✅</span>";
+
+        renderPedidos(data.pedidos);
+      } catch (err) {
+        document.getElementById("backendStatus").innerHTML =
+          "<span class='text-red-600 font-semibold'>Error de conexión ❌</span>";
+        console.error("Error cargando pedidos:", err);
+      }
+    }
+
+    function renderPedidos(pedidos) {
+      const cont = document.getElementById("pedidos");
+      cont.innerHTML = "";
+
+      if (pedidos.length === 0) {
+        cont.innerHTML = `<p class="text-gray-600">No hay pedidos en preparación 🚀</p>`;
+        return;
+      }
+
+      pedidos.forEach(p => {
+        const card = document.createElement("div");
+        card.className = "bg-white p-4 rounded-xl shadow hover:shadow-lg transition";
+
+        let itemsHTML = "";
+
+        if (Array.isArray(p.items)) {
+          itemsHTML = p.items.map(it => `
+            <div class="bg-gray-100 p-2 rounded mb-2">
+              <p><b>🍔 ${it.nombre}</b></p>
+              <p>Cantidad: ${it.cantidad}</p>
+            </div>
+          `).join("");
+        } else {
+          // Si viene como texto "Hamburguesa Res x1 - $18000"
+          const partes = p.items.split(",");
+          let lista = [];
+
+          partes.forEach(item => {
+            let sinPrecio = item.split(" - ")[0].trim(); // quitar precio
+            const match = sinPrecio.match(/(.+)\sx(\d+)/i);
+            if (match) {
+              lista.push({ nombre: match[1].trim(), cantidad: Number(match[2]) });
+            } else {
+              lista.push({ nombre: sinPrecio, cantidad: 1 });
+            }
+          });
+
+          itemsHTML = lista.map(it => `
+            <div class="bg-gray-100 p-2 rounded mb-2">
+              <p><b>🍔 ${it.nombre}</b></p>
+              <p>Cantidad: ${it.cantidad}</p>
+            </div>
+          `).join("");
+        }
+
+        // ⚡ Botones corregidos
+        card.innerHTML = `
+          <h4 class="font-bold text-lg mb-2">Pedido #${p.numeroPedido} - ${p.fecha}</h4>
+          ${itemsHTML}
+          <div class="flex gap-2">
+            <button onclick="verObs('${(p.observaciones || "Sin observaciones").replace(/'/g, "\\'")}')" 
+                    class="px-3 py-1 bg-blue-600 text-white rounded-lg">Ver obs.</button>
+            <button onclick="marcarPreparado(${p.numeroPedido})" 
+                    class="px-3 py-1 bg-green-600 text-white rounded-lg">Preparado</button>
+          </div>
+        `;
+        cont.appendChild(card);
+      });
+    }
+
+    function verObs(texto) {
+      document.getElementById("obsText").innerText = texto;
+      document.getElementById("modal").classList.remove("hidden");
+    }
+
+    function cerrarModal() {
+      document.getElementById("modal").classList.add("hidden");
+    }
+
+    async function marcarPreparado(nro) {
+      if (!confirm(`¿Marcar el pedido #${nro} como Preparado?`)) return;
+
+      try {
+        const res = await fetch(API_URL + "?accion=marcarPreparado", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ numeroPedido: nro })
+        });
+        const data = await res.json();
+
+        if (data.ok) {
+          alert(`✅ Pedido #${nro} marcado como Preparado`);
+          cargarPedidos(); // refresca lista
+        } else {
+          alert("❌ Error: " + data.error);
+        }
+      } catch (err) {
+        alert("Error en conexión: " + err);
+      }
+    }
+
+    // 🚀 Cargar pedidos al iniciar
+    cargarPedidos();
+
+    // 🔄 Recargar cada 10 segundos para ver cambios en vivo
+    setInterval(cargarPedidos, 10000);
+  </script>
+</body>
+</html>
