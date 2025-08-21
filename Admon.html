@@ -115,48 +115,26 @@
       document.getElementById("modal").classList.add("hidden");
     }
 
-    /** Actualiza el estado de un pedido a "Entregado" SOLO si está en "En preparación" */
-function marcarPedidoPreparado(numeroPedido) {
-  const hoja = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Ventas");
-  if (!hoja) throw new Error('No existe la hoja "Ventas".');
+    async function marcarPreparado(nro) {
+  if (!confirm(`¿Marcar el pedido #${nro} como Entregado?`)) return;
 
-  const data = hoja.getDataRange().getValues();
-  if (data.length < 2) return false;
+  try {
+    const res = await fetch(API_URL + "?accion=marcarPreparado&numeroPedido=" + nro, {
+      method: "POST"
+    });
+    const data = await res.json();
 
-  const headers   = data[0];
-  const pedidoIdx = headers.indexOf("N° Pedido");
-  const estadoIdx = headers.indexOf("Estado");
-
-  if (pedidoIdx === -1 || estadoIdx === -1) throw new Error("Faltan columnas N° Pedido o Estado");
-
-  // Normaliza acentos / mayúsculas (soporta "En preparación" y "En preparacion")
-  const norm = s => String(s || "")
-    .toLowerCase()
-    .replace(/[áàäâ]/g,"a")
-    .replace(/[éèëê]/g,"e")
-    .replace(/[íìïî]/g,"i")
-    .replace(/[óòöô]/g,"o")
-    .replace(/[úùüû]/g,"u")
-    .replace(/ñ/g,"n")
-    .trim();
-
-  // Recorre de arriba hacia abajo, pero SOLO marca si está en preparación
-  for (let i = 1; i < data.length; i++) {
-    const num = Number(data[i][pedidoIdx]);
-    const estadoNorm = norm(data[i][estadoIdx]);
-
-    if (num === numeroPedido && estadoNorm === "en preparacion") {
-      hoja.getRange(i + 1, estadoIdx + 1).setValue("Entregado");
-
-      // invalidar cache de pedidos
-      try { CacheService.getScriptCache().remove(CACHE_KEYS.pedidos); } catch(e){}
-
-      return true; // actualizado
+    if (data.ok && data.actualizado) {
+      alert(`✅ Pedido #${nro} marcado como Entregado`);
+      cargarPedidos(); // refresca lista
+    } else if (data.ok && !data.actualizado) {
+      alert(`⚠️ El pedido #${nro} no está en "En preparación" (ya está entregado o no existe).`);
+    } else {
+      alert("❌ Error: " + data.error);
     }
+  } catch (err) {
+    alert("Error en conexión: " + err);
   }
-
-  // No se encontró ese número en estado "En preparación"
-  return false;
 }
 
 
@@ -166,6 +144,7 @@ function marcarPedidoPreparado(numeroPedido) {
   </script>
 </body>
 </html>
+
 
 
 
