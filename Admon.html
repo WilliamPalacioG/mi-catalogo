@@ -28,7 +28,7 @@
 
   <script>
     // 🔗 URL de tu backend
-    const API_URL = "https://script.google.com/macros/s/AKfycbxnbRThEirvswBApsaiAfxY6MLz3YZbLRD7MEdRo9lvX-ELiUUXvIknUXxCNABnGSr8/exec";
+    const API_URL = "https://script.google.com/macros/s/AKfycbyIZ1BoppUzOAmXk-MdbKh2iIkYsErUok0hRxPkPmeHh0pH0ElzItQNb_saKL6cq3w/exec";
 
     async function cargarPedidos() {
       try {
@@ -116,23 +116,38 @@
     }
 
     async function marcarPreparado(nro) {
-      if (!confirm(`¿Marcar el pedido #${nro} como Entregado?`)) return;
-      try {
-        const res = await fetch(API_URL + "?accion=marcarPreparado&numeroPedido=" + nro, {
-          method: "POST"
-        });
-        const data = await res.json();
+  // Buscar el pedido en la lista cargada
+  const pedido = window.pedidos?.find(p => p.numeroPedido == nro);
 
-        if (data.ok) {
-          alert(`✅ Pedido #${nro} marcado como Entregado`);
-          cargarPedidos(); // refresca lista
-        } else {
-          alert("❌ Error: " + data.error);
-        }
-      } catch (err) {
-        alert("Error en conexión: " + err);
-      }
+  if (!pedido) {
+    alert("❌ Pedido no encontrado en la lista cargada.");
+    return;
+  }
+
+  if (pedido.estado && pedido.estado.toLowerCase() !== "En preparación") {
+    alert(`⚠️ El pedido #${nro} ya está marcado como ${pedido.estado}.`);
+    return;
+  }
+
+  if (!confirm(`¿Marcar el pedido #${nro} como Entregado?`)) return;
+
+  try {
+    const res = await fetch(API_URL + "?accion=marcarPreparado&numeroPedido=" + nro, {
+      method: "POST"
+    });
+    const data = await res.json();
+
+    if (data.ok) {
+      alert(`✅ Pedido #${nro} marcado como Entregado`);
+      cargarPedidos(); // refresca lista
+    } else {
+      alert("❌ Error: " + data.error);
     }
+  } catch (err) {
+    alert("Error en conexión: " + err);
+  }
+}
+
 
     // 🚀 Cargar pedidos al iniciar
     cargarPedidos();
@@ -140,4 +155,5 @@
   </script>
 </body>
 </html>
+
 
