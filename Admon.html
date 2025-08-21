@@ -28,7 +28,7 @@
 
   <script>
     // 🔗 URL de tu backend
-    const API_URL = "https://script.google.com/macros/s/AKfycbyIZ1BoppUzOAmXk-MdbKh2iIkYsErUok0hRxPkPmeHh0pH0ElzItQNb_saKL6cq3w/exec";
+    const API_URL = "https://script.google.com/macros/s/AKfycbySeEPhj95vyF6BZtw8_HpM1lob4Za_h4APoM2H7xzctTpIXNCS9Q-YekCSIB993y9P/exec";
 
     async function cargarPedidos() {
       try {
@@ -115,37 +115,48 @@
       document.getElementById("modal").classList.add("hidden");
     }
 
-    async function marcarPreparado(nro) {
-  // Buscar el pedido en la lista cargada
-  const pedido = window.pedidos?.find(p => p.numeroPedido == nro);
+    /** Actualiza el estado de un pedido a "Entregado" SOLO si está en "En preparación" */
+function marcarPedidoPreparado(numeroPedido) {
+  const hoja = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Ventas");
+  if (!hoja) throw new Error('No existe la hoja "Ventas".');
 
-  if (!pedido) {
-    alert("❌ Pedido no encontrado en la lista cargada.");
-    return;
-  }
+  const data = hoja.getDataRange().getValues();
+  if (data.length < 2) return false;
 
-  if (pedido.estado && pedido.estado.toLowerCase() !== "En preparación") {
-    alert(`⚠️ El pedido #${nro} ya está marcado como ${pedido.estado}.`);
-    return;
-  }
+  const headers   = data[0];
+  const pedidoIdx = headers.indexOf("N° Pedido");
+  const estadoIdx = headers.indexOf("Estado");
 
-  if (!confirm(`¿Marcar el pedido #${nro} como Entregado?`)) return;
+  if (pedidoIdx === -1 || estadoIdx === -1) throw new Error("Faltan columnas N° Pedido o Estado");
 
-  try {
-    const res = await fetch(API_URL + "?accion=marcarPreparado&numeroPedido=" + nro, {
-      method: "POST"
-    });
-    const data = await res.json();
+  // Normaliza acentos / mayúsculas (soporta "En preparación" y "En preparacion")
+  const norm = s => String(s || "")
+    .toLowerCase()
+    .replace(/[áàäâ]/g,"a")
+    .replace(/[éèëê]/g,"e")
+    .replace(/[íìïî]/g,"i")
+    .replace(/[óòöô]/g,"o")
+    .replace(/[úùüû]/g,"u")
+    .replace(/ñ/g,"n")
+    .trim();
 
-    if (data.ok) {
-      alert(`✅ Pedido #${nro} marcado como Entregado`);
-      cargarPedidos(); // refresca lista
-    } else {
-      alert("❌ Error: " + data.error);
+  // Recorre de arriba hacia abajo, pero SOLO marca si está en preparación
+  for (let i = 1; i < data.length; i++) {
+    const num = Number(data[i][pedidoIdx]);
+    const estadoNorm = norm(data[i][estadoIdx]);
+
+    if (num === numeroPedido && estadoNorm === "en preparacion") {
+      hoja.getRange(i + 1, estadoIdx + 1).setValue("Entregado");
+
+      // invalidar cache de pedidos
+      try { CacheService.getScriptCache().remove(CACHE_KEYS.pedidos); } catch(e){}
+
+      return true; // actualizado
     }
-  } catch (err) {
-    alert("Error en conexión: " + err);
   }
+
+  // No se encontró ese número en estado "En preparación"
+  return false;
 }
 
 
@@ -155,5 +166,6 @@
   </script>
 </body>
 </html>
+
 
 
